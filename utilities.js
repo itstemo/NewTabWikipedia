@@ -1,20 +1,23 @@
 (function() {
   function updateClock() {
-    Date.getMinutesTwoDigits = function() {
-      var retval = now.getMinutes();
-      if (retval < 10) return ("0" + retval.toString());
-      else return retval.toString();
+    var currentTime = new Date();
+    var hours = currentTime.getHours();
+    var minutes = currentTime.getMinutes();
+    var seconds = currentTime.getSeconds();
+    if (minutes < 10){
+      minutes = "0" + minutes;
     }
-    Date.getHoursModTwelve = function() {
-      var retval = now.getHours();
-      retval = retval%12;
-      if (retval == 0) retval = 12;
-      return retval;
+    if (seconds < 10){
+      seconds = "0" + seconds;
     }
-    var now = new Date(),
-        time = Date.getHoursModTwelve() + ':' + Date.getMinutesTwoDigits();
-    document.getElementById('time').innerHTML = ["", time].join('');
-    setTimeout(updateClock, 1000);
+    var v = hours + ":" + minutes + ":" + seconds + " ";
+    if(hours > 11){
+      v+="PM";
+    } else {
+      v+="AM"
+    }
+    setTimeout("updateTime()",1000);
+    document.getElementById('time').innerHTML = v;
   }
 
   updateClock();

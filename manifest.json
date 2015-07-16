@@ -1,21 +1,8 @@
 {
-  // Required
  "manifest_version": 2,
  "name": "Wikipedia New Tab",
  "version": "1",
-
- // Recommended
  "description": "Opens a new random Wikipedia article when you open a new Tab",
-
- // Optional
  "author": "Oliver, Jose, Temo",
-
- "chrome_url_overrides": {
-
-   "newtab": "start-page.html"
-
-   }
-
-
-
+ "chrome_url_overrides": {"newtab": "start-page.html"}
 }

@@ -1,11 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-  	  <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
-	  <link rel="stylesheet" type="text/css" href="css/style.css">
-	  <title>Wikipedia New Tab</title>
-	</head>
-	<body>
-	Sample body text
-	</body>
+      <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+      <link rel="stylesheet" type="text/css" href="css/style.css">
+
+      <title>Wikipedia New Tab</title>
+    
+      <script type="text/javascript">
+            <!--
+            function updateTime() {
+            var currentTime = new Date();
+            var hours = currentTime.getHours();
+            var minutes = currentTime.getMinutes();
+            var seconds = currentTime.getSeconds();
+            if (minutes < 10){
+            minutes = "0" + minutes;
+            }
+            if (seconds < 10){
+            seconds = "0" + seconds;
+            }
+            var v = hours + ":" + minutes + ":" + seconds + " ";
+            if(hours > 11){
+            v+="PM";
+            } else {
+            v+="AM"
+            }
+            setTimeout("updateTime()",1000);
+            document.getElementById('time').innerHTML=v;
+            }
+            updateTime();
+            //-->
+        </script>
+
+
+    </head>
+
+    <body>
+        <center>Sample Body Text</center>
+        <center><h4><span id="time" /></h4></center>
+    </body>
 </html>

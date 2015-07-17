@@ -1,5 +1,5 @@
 (function() {
-  function updateClock() {
+  function updateTime() {
     var currentTime = new Date();
     var hours = currentTime.getHours();
     var minutes = currentTime.getMinutes();
@@ -16,9 +16,8 @@
     } else {
       v+="AM"
     }
-    setTimeout("updateTime()",1000);
     document.getElementById('time').innerHTML = v;
-  }
-
-  updateClock();
+  };
+  setTimeout("updateTime()",1000);
+  updateTime();
 })();

@@ -1,6 +1,6 @@
 // Gets the text description of the selected article url api.
 // Placeholder: Google (Replace for other article with page title)
-    $(document).ready(function(){
+$(document).ready(function(){
 
     $.ajax({
       type: "GET",
@@ -30,6 +30,4 @@
       }
     });
 
-    });
-
-</script>
+});

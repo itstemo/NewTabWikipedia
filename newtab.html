@@ -11,11 +11,17 @@
 <body>
   <!-- The skeleton is static and complete. JS only fills text nodes and
        attributes, never builds DOM, so the first paint has final geometry. -->
+  <!-- The head spans both columns so the rule runs the full width of the
+       page, and so the plate's top edge lines up with the first line of the
+       paragraph no matter how many lines the headword takes. -->
   <main class="entry" id="entry" hidden>
-    <div class="text">
+    <header class="head">
       <p class="gloss" id="gloss"></p>
       <h1 class="headword"><a id="headword" href="#"></a></h1>
       <hr class="rule">
+    </header>
+
+    <div class="text">
       <p class="body" id="extract"></p>
       <p class="notice" id="notice" hidden></p>
       <nav class="actions">
@@ -28,9 +34,16 @@
          which is already the gloss. Repeating it under the plate is
          redundancy, not encyclopedia texture. -->
     <figure class="plate">
-      <img id="plate-img" alt="" hidden>
+      <button class="plate-btn" id="plate-btn" type="button" hidden
+              aria-label="View this plate at full size">
+        <img id="plate-img" alt="">
+      </button>
     </figure>
   </main>
+
+  <dialog class="viewer" id="viewer">
+    <img id="viewer-img" alt="">
+  </dialog>
 
   <aside class="index" id="index" aria-hidden="true">
     <span class="index-letter" id="index-letter"></span>

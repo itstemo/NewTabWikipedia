@@ -30,8 +30,8 @@
   /* ~62 characters at the body size. Kept in px, not ch: ch resolves against
      the *parent's* font, which is not the face the paragraph is set in. */
   --measure: 540px;
-  --plate-w: 168px;
-  --gap: 56px;
+  --plate-w: 152px;
+  --gap: 44px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -70,11 +70,18 @@ body {
   /* The plate column keeps its width whether or not there is an image, so
      the text measure never shifts between tabs. */
   grid-template-columns: minmax(0, var(--measure)) var(--plate-w);
-  gap: var(--gap);
+  grid-template-areas:
+    "head  head"
+    "text  plate";
+  column-gap: var(--gap);
   align-items: start;
   width: 100%;
   max-width: calc(var(--measure) + var(--plate-w) + var(--gap));
 }
+
+.head { grid-area: head; }
+.text { grid-area: text; }
+.plate { grid-area: plate; }
 
 .text { min-width: 0; }
 
@@ -125,8 +132,23 @@ body {
 
 .plate {
   margin: 0;
-  /* Optically aligns the top of the plate with the headword, not the gloss. */
-  padding-top: 26px;
+  /* Half the body's leading. Drops the plate's top edge from the paragraph's
+     em box onto the first line's cap height, so the two read as aligned
+     rather than merely starting at the same coordinate. */
+  padding-top: 6px;
+}
+
+/* Must out-specify the `display: block` below, or an entry with no plate
+   draws an empty bordered rectangle in the column. */
+.plate-btn[hidden] { display: none; }
+
+.plate-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
 }
 
 .plate img {
@@ -136,10 +158,6 @@ body {
   object-fit: cover;
   border: 1px solid var(--rule);
 }
-
-/* Must out-specify `.plate img { display: block }`, or an entry with no plate
-   draws an empty bordered rectangle. */
-.plate img[hidden] { display: none; }
 
 .plate img.fade-in {
   animation: fade 160ms ease-out;
@@ -241,14 +259,46 @@ kbd {
   letter-spacing: 0.08em;
 }
 
+/* -------------------------------------------------------------- viewer -- */
+
+/* The plate is a plate — small on purpose. This is where the photograph is
+   actually legible, at a viewport-sized copy of the original. */
+.viewer {
+  margin: auto;
+  padding: 0;
+  max-width: 92vw;
+  max-height: 92vh;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+.viewer::backdrop {
+  background: rgb(0 0 0 / 0.62);
+}
+
+.viewer img {
+  display: block;
+  max-width: 92vw;
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+  cursor: zoom-out;
+}
+
+.viewer[open] { animation: fade 160ms ease-out; }
+
 /* -------------------------------------------------------------- narrow -- */
 
 @media (max-width: 860px) {
   .entry {
     grid-template-columns: minmax(0, 1fr);
-    gap: 30px;
+    grid-template-areas:
+      "head"
+      "plate"
+      "text";
+    row-gap: 26px;
   }
-  .plate { padding-top: 0; order: -1; max-width: var(--plate-w); }
+  .plate { padding-top: 0; max-width: var(--plate-w); }
   .index { display: none; }
 }
 

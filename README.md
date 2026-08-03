@@ -32,9 +32,25 @@ The network is never on the critical path.
 - **Offline** — the queue is the offline story. When it empties offline, the
   last entry returns with a quiet line. Fetch failures are never surfaced.
 
-Images are preloaded as they enter the queue, requested at 2× and cropped 4:5.
 Entries without an image keep the column's width and simply leave it empty —
 the text measure never shifts between tabs.
+
+## Plates
+
+The plate is small on purpose, a book plate rather than a hero: 152px, 4:5,
+hairline rule, no shadow. Clicking it opens the photograph at viewport size.
+
+Sizing has one non-obvious constraint. Commons thumbnail URLs carry their
+width in the path, but **only a fixed set of widths exists** — 20, 40, 60,
+120, 250, 330, 500, 960, 1280, 1920, 3840. Hotlinking any other width returns
+a 400, not a smaller image ([T414805][t], [common thumbnail sizes][s]), so
+rewriting a URL to `336px` produces a broken plate. `newtab.js` rounds up to
+the nearest step, capped by the original's width so MediaWiki is never asked
+for an upscale — except for SVGs, whose nominal width is not a resolution
+limit.
+
+[t]: https://phabricator.wikimedia.org/T414805
+[s]: https://www.mediawiki.org/wiki/Common_thumbnail_sizes
 
 ## Interactions
 
@@ -42,6 +58,7 @@ the text measure never shifts between tabs.
 | --- | --- |
 | `R` / *Another entry* | next entry from the queue, no reload |
 | Headword / *Read the full entry* | opens the article in the same tab |
+| Click the plate | the photograph at viewport size; `Esc` or click closes |
 
 ## Files
 

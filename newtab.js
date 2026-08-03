@@ -33,6 +33,8 @@ const REJECT_TITLE = /^(List of|\d{4}[–-]\d{2,4} |\d{4} (FIFA|UEFA|NCAA|Summer
 
 const el = (id) => document.getElementById(id);
 
+let current = null; // the entry on screen, for the full-size viewer
+
 /* ----------------------------------------------------------- storage -- */
 
 function readQueue() {
@@ -62,6 +64,64 @@ function readLast() {
   }
 }
 
+/* ------------------------------------------------------------ images -- */
+
+/* Commons thumbnail URLs carry their width in the path
+ * (.../thumb/4/42/Name.jpg/500px-Name.jpg), so a different size is one string
+ * edit away — no second API call to get a bigger copy of the same file.
+ *
+ * But only these widths exist. Wikimedia rejects hotlinked thumbnails at any
+ * other size with a 400, so an invented width like 336px is not a smaller
+ * image, it is a broken one (T414805). Requests are rounded *up* to a step,
+ * then downsized by the browser.
+ *
+ * https://www.mediawiki.org/wiki/Common_thumbnail_sizes
+ */
+const STEPS = [20, 40, 60, 120, 250, 330, 500, 960, 1280, 1920, 3840];
+
+/* Smallest step that covers `need`, never exceeding `cap` (the original's
+ * own width — asking for an upscale is what makes a plate look pixelated).
+ * A vector original has no meaningful width, so it is never capped. */
+function step(need, cap) {
+  const pool = cap ? STEPS.filter((s) => s <= cap) : STEPS;
+  if (!pool.length) return STEPS[0];
+  return pool.find((s) => s >= need) ?? pool[pool.length - 1];
+}
+
+function atWidth(url, width) {
+  return url.replace(/\/\d+px-/, `/${width}px-`);
+}
+
+function urlWidth(url) {
+  const m = url.match(/\/(\d+)px-/);
+  return m ? Number(m[1]) : 0;
+}
+
+function plateWidth() {
+  const token = getComputedStyle(document.documentElement).getPropertyValue("--plate-w");
+  return parseInt(token, 10) || 168;
+}
+
+function cap(entry) {
+  return entry.vector ? 0 : entry.width || 0;
+}
+
+function plateSrc(entry) {
+  if (!urlWidth(entry.thumbnail)) return entry.thumbnail; // not a thumb URL
+  const need = plateWidth() * (window.devicePixelRatio || 1);
+  return atWidth(entry.thumbnail, step(need, cap(entry)));
+}
+
+/* Deliberately not `original`: that can be a 40-megapixel scan. A viewport-
+ * sized copy is indistinguishable on screen and arrives in a fraction of the
+ * time. Only fetched when the plate is actually clicked. */
+function fullSrc(entry) {
+  if (!urlWidth(entry.thumbnail)) return entry.thumbnail; // already an original
+  const viewport = Math.min(window.innerWidth, window.innerHeight * 1.2);
+  const need = Math.min(viewport * (window.devicePixelRatio || 1), 1920);
+  return atWidth(entry.thumbnail, step(need, cap(entry)));
+}
+
 /* ------------------------------------------------------------ render -- */
 
 function trimExtract(text) {
@@ -89,21 +149,23 @@ function render(entry, { stale = false } = {}) {
   }
 
   const img = el("plate-img");
+  const button = el("plate-btn");
+  current = entry;
   if (entry.thumbnail) {
     img.classList.remove("fade-in");
-    img.src = entry.thumbnail;
+    img.src = plateSrc(entry);
     img.alt = entry.description || entry.title;
-    img.hidden = false;
+    button.hidden = false;
 
     // Fade only on a cache miss. A preloaded plate completes synchronously
     // and should simply be there; anything that arrives later gets the 160ms.
     if (!img.complete) {
       img.addEventListener("load", () => img.classList.add("fade-in"), { once: true });
     }
-    img.addEventListener("error", () => { img.hidden = true; }, { once: true });
+    img.addEventListener("error", () => { button.hidden = true; }, { once: true });
   } else {
     // The column holds its width and stays empty. Never reflow the text.
-    img.hidden = true;
+    button.hidden = true;
     img.removeAttribute("src");
   }
 
@@ -135,8 +197,10 @@ function apiUrl() {
     exintro: "1",
     explaintext: "1",
     exlimit: "max",
-    piprop: "thumbnail",
-    pithumbsize: "336",
+    // `original` comes back in the same request, so the full-size view costs
+    // no extra round trip — only its dimensions, which cap what we ask for.
+    piprop: "thumbnail|original",
+    pithumbsize: "330", // a standard step; see STEPS above
     inprop: "url",
   });
   return `${API}?${params}`;
@@ -150,15 +214,18 @@ function keep(page) {
 }
 
 function toEntry(page) {
-  let thumb = page.thumbnail?.source || null;
-  // Retina: the plate renders at 168px CSS.
-  if (thumb) thumb = thumb.replace(/\/\d+px-/, "/336px-");
+  // Stored unresized. The size is chosen at render time, when the device
+  // pixel ratio is actually known.
   return {
     pageid: page.pageid,
     title: page.title,
+    width: page.original?.width || 0,
+    // An SVG's nominal width is not a resolution limit; it rasterises at any
+    // size, so it must not be capped by it.
+    vector: /\.svg$/i.test(page.original?.source || ""),
     description: page.description || "",
     extract: page.extract,
-    thumbnail: thumb,
+    thumbnail: page.thumbnail?.source || null,
     url: page.fullurl,
   };
 }
@@ -173,7 +240,7 @@ async function fetchEntries() {
 /* Fills the browser's HTTP cache so the plate is already decoded by the time
  * this entry reaches the front of the queue. */
 function preload(entry) {
-  if (entry.thumbnail) new Image().src = entry.thumbnail;
+  if (entry.thumbnail) new Image().src = plateSrc(entry);
 }
 
 async function topUp() {
@@ -228,7 +295,28 @@ async function coldStart() {
   if (last) render(last, { stale: true });
 }
 
+/* The full-size view is loaded on click and never before: no point spending
+ * bandwidth on a large copy of an image most tabs are never asked about. */
+function wireViewer() {
+  const viewer = el("viewer");
+  const viewerImg = el("viewer-img");
+
+  el("plate-btn").addEventListener("click", () => {
+    if (!current?.thumbnail) return;
+    viewerImg.src = fullSrc(current);
+    viewerImg.alt = current.description || current.title;
+    viewer.showModal(); // <dialog> gives Escape and focus containment free
+  });
+
+  // Clicking the image or the backdrop closes it; the dialog fills its own
+  // box, so any click landing on the element itself is a backdrop click.
+  viewer.addEventListener("click", () => viewer.close());
+  viewer.addEventListener("close", () => viewerImg.removeAttribute("src"));
+}
+
 function boot() {
+  wireViewer();
+
   if (advance()) {
     // Painted from cache. Refill in the background, off the critical path.
     topUp();
@@ -244,6 +332,7 @@ function boot() {
   document.addEventListener("keydown", (e) => {
     if (e.key !== "r" && e.key !== "R") return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (el("viewer").open) return; // Escape closes the viewer; R does nothing
     if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName) || e.target.isContentEditable) return;
     e.preventDefault();
     if (!advance()) coldStart();

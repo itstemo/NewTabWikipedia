@@ -1,0 +1,310 @@
+/* ---------------------------------------------------------------- fonts --
+   Bundled locally on purpose: a new tab must never wait on a CDN, and a
+   font swapping in 40 times a day is intolerable. Drop the .woff2 files
+   into /fonts (see fonts/README.md) and these rules take over; until then
+   the stacks below fall through to system faces and the layout is the same.
+   -------------------------------------------------------------------- */
+@font-face {
+  font-family: "Newsreader";
+  src: url("fonts/Newsreader.woff2") format("woff2-variations");
+  font-weight: 400 600;
+  font-display: block;
+}
+@font-face {
+  font-family: "Plex Condensed";
+  src: url("fonts/IBMPlexSansCondensed-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: block;
+}
+
+:root {
+  --paper: #F5F4F0;
+  --ink: #17181C;
+  --muted: #6B6C72;
+  --rule: #D6D4CC;
+  --accent: #2F4B96;
+
+  --serif: "Newsreader", "Iowan Old Style", "Charter", Georgia, serif;
+  --cond: "Plex Condensed", "Avenir Next Condensed", "Helvetica Neue", sans-serif;
+
+  /* ~62 characters at the body size. Kept in px, not ch: ch resolves against
+     the *parent's* font, which is not the face the paragraph is set in. */
+  --measure: 540px;
+  --plate-w: 152px;
+  --gap: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #15171B;
+    --ink: #E9E7E1;
+    --muted: #8B8D95;
+    --rule: #2B2E35;
+    --accent: #86A4EC;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  display: grid;
+  place-items: center;
+  /* Anchored slightly above optical center. Horizontal padding lives here,
+     not on .entry, so it does not eat into the measure. */
+  padding: 4vh clamp(24px, 6vw, 96px) 10vh;
+  font-family: var(--serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --------------------------------------------------------------- layout -- */
+
+.entry {
+  display: grid;
+  /* The plate column keeps its width whether or not there is an image, so
+     the text measure never shifts between tabs. */
+  grid-template-columns: minmax(0, var(--measure)) var(--plate-w);
+  grid-template-areas:
+    "head  head"
+    "text  plate";
+  column-gap: var(--gap);
+  align-items: start;
+  width: 100%;
+  max-width: calc(var(--measure) + var(--plate-w) + var(--gap));
+}
+
+.head { grid-area: head; }
+.text { grid-area: text; }
+.plate { grid-area: plate; }
+
+.text { min-width: 0; }
+
+.gloss {
+  margin: 0 0 10px;
+  font-family: var(--cond);
+  font-size: 11px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  min-height: 13px; /* reserved: entries without a description keep the gap */
+}
+
+.headword {
+  margin: 0;
+  font-size: 38px;
+  line-height: 1.1;
+  font-weight: 500;
+  font-variation-settings: "opsz" 36;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+}
+
+.rule {
+  margin: 22px 0 20px;
+  border: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.body {
+  margin: 0;
+  font-size: 17.5px;
+  line-height: 1.62;
+  font-variation-settings: "opsz" 16;
+  hyphens: auto;
+}
+
+.notice {
+  margin: 18px 0 0;
+  font-family: var(--cond);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------- plate -- */
+
+.plate {
+  margin: 0;
+  /* Half the body's leading. Drops the plate's top edge from the paragraph's
+     em box onto the first line's cap height, so the two read as aligned
+     rather than merely starting at the same coordinate. */
+  padding-top: 6px;
+}
+
+/* Must out-specify the `display: block` below, or an entry with no plate
+   draws an empty bordered rectangle in the column. */
+.plate-btn[hidden] { display: none; }
+
+.plate-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+.plate img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border: 1px solid var(--rule);
+}
+
+.plate img.fade-in {
+  animation: fade 160ms ease-out;
+}
+
+@keyframes fade { from { opacity: 0; } }
+
+/* ------------------------------------------------------------- actions -- */
+
+.actions {
+  display: flex;
+  gap: 28px;
+  align-items: baseline;
+  margin-top: 34px;
+}
+
+a { color: inherit; }
+
+.headword a {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+  transition: text-decoration-color 120ms ease;
+}
+
+.headword a:hover { text-decoration-color: var(--rule); }
+
+.action {
+  font-family: var(--cond);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  transition: text-decoration-thickness 120ms ease;
+}
+
+.action:hover { text-decoration-thickness: 2px; }
+
+button.action {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+kbd {
+  font-family: inherit;
+  font-size: 9.5px;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 1px 4px;
+  margin-left: 6px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* --------------------------------------------------------- thumb index -- */
+
+/* The cut tab on the edge of a bound volume. The letter comes from the
+   entry itself, so it changes meaningfully rather than decorating. */
+.index {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 14px;
+  border-left: 1px solid var(--rule);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--cond);
+  color: var(--muted);
+}
+
+/* The letter sits upright on the tab, as a cut index does; only the entry
+   number below it runs with the spine. */
+.index-letter {
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+}
+
+.index-number {
+  writing-mode: vertical-rl;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+/* -------------------------------------------------------------- viewer -- */
+
+/* The plate is a plate — small on purpose. This is where the photograph is
+   actually legible, at a viewport-sized copy of the original. */
+.viewer {
+  margin: auto;
+  padding: 0;
+  max-width: 92vw;
+  max-height: 92vh;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+.viewer::backdrop {
+  background: rgb(0 0 0 / 0.62);
+}
+
+.viewer img {
+  display: block;
+  max-width: 92vw;
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+  cursor: zoom-out;
+}
+
+.viewer[open] { animation: fade 160ms ease-out; }
+
+/* -------------------------------------------------------------- narrow -- */
+
+@media (max-width: 860px) {
+  .entry {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "head"
+      "plate"
+      "text";
+    row-gap: 26px;
+  }
+  .plate { padding-top: 0; max-width: var(--plate-w); }
+  .index { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

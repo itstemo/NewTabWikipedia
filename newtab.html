@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Paints the correct backdrop before the stylesheet lands. Without this,
+       every tab flashes white in dark mode. -->
+  <meta name="color-scheme" content="light dark">
+  <title>New Tab</title>
+  <link rel="stylesheet" href="newtab.css">
+</head>
+<body>
+  <!-- The skeleton is static and complete. JS only fills text nodes and
+       attributes, never builds DOM, so the first paint has final geometry. -->
+  <!-- The head spans both columns so the rule runs the full width of the
+       page, and so the plate's top edge lines up with the first line of the
+       paragraph no matter how many lines the headword takes. -->
+  <main class="entry" id="entry" hidden>
+    <header class="head">
+      <p class="gloss" id="gloss"></p>
+      <h1 class="headword"><a id="headword" href="#"></a></h1>
+      <hr class="rule">
+    </header>
+
+    <div class="text">
+      <p class="body" id="extract"></p>
+      <p class="notice" id="notice" hidden></p>
+      <nav class="actions">
+        <a class="action" id="read" href="#">Read the full entry <span aria-hidden="true">&rarr;</span></a>
+        <button class="action" id="another" type="button">Another entry <kbd>R</kbd></button>
+      </nav>
+    </div>
+
+    <!-- No caption: the only text the API offers for it is `description`,
+         which is already the gloss. Repeating it under the plate is
+         redundancy, not encyclopedia texture. -->
+    <figure class="plate">
+      <button class="plate-btn" id="plate-btn" type="button" hidden
+              aria-label="View this plate at full size">
+        <img id="plate-img" alt="">
+      </button>
+    </figure>
+  </main>
+
+  <dialog class="viewer" id="viewer">
+    <img id="viewer-img" alt="">
+  </dialog>
+
+  <aside class="index" id="index" aria-hidden="true">
+    <span class="index-letter" id="index-letter"></span>
+    <span class="index-number" id="index-number"></span>
+  </aside>
+
+  <script src="newtab.js"></script>
+</body>
+</html>

@@ -16,10 +16,11 @@ in the background, and the previous entry is used when Wikipedia is unavailable.
 
 ## Settings and progress
 
-The settings panel lets you choose a Wikipedia-backed section: all sections,
-Physics, History, Mathematics, Technology, Geography, Art, Music, or
-Literature. Sectioned entries use Wikipedia's `categorymembers` API and then
-fetch article extracts and images by page ID.
+The settings panel keeps curated sections visible and adds a **More sections**
+search powered by Wikipedia's category search API. Users can select several
+sections at once, including custom categories such as History + Archaeology +
+Geography. The selection is stored in `localStorage` and category members are
+combined before article details are fetched.
 
 The panel also keeps local progress counters for articles encountered and full
 Wikipedia entries opened. These counters never leave the browser.

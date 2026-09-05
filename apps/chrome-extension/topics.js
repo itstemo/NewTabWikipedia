@@ -51,7 +51,23 @@
     return url.toString();
   }
 
-  const api = { TOPICS, categoryMembersURL, pageLookupURL };
+  function categorySearchURL(query, limit = 10) {
+    const url = new URL(API);
+    const params = {
+      action: 'query',
+      format: 'json',
+      formatversion: '2',
+      origin: '*',
+      list: 'search',
+      srnamespace: '14',
+      srsearch: query,
+      srlimit: String(limit),
+    };
+    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+    return url.toString();
+  }
+
+  const api = { TOPICS, categoryMembersURL, categorySearchURL, pageLookupURL };
   global.WikipediaTopics = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : window);

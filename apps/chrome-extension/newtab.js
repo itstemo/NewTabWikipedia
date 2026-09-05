@@ -17,7 +17,7 @@ const LAST_KEY = "wnt.last";
 const SETTINGS_KEY = "wnt.settings";
 const STATS_KEY = "wnt.stats";
 
-const DEFAULT_SETTINGS = { topic: "all" };
+const DEFAULT_SETTINGS = { topics: [], customCategories: [] };
 const DEFAULT_STATS = { articles: 0, links: 0 };
 const TOPICS = window.WikipediaTopics.TOPICS;
 
@@ -70,11 +70,26 @@ function readLast() {
   }
 }
 
+function normalizeSettings(saved) {
+  const rawTopics = Array.isArray(saved?.topics)
+    ? saved.topics
+    : (saved?.topic && saved.topic !== "all" ? [saved.topic] : []);
+  const topics = [...new Set(rawTopics.filter((id) => id !== "all" && TOPICS[id]?.category))];
+  const customCategories = Array.isArray(saved?.customCategories)
+    ? saved.customCategories
+      .map((item) => typeof item === "string" ? { title: item, label: item.replace(/^Category:/, "") } : item)
+      .filter((item) => item?.title?.startsWith("Category:"))
+      .map((item) => ({ title: item.title, label: item.label || item.title.replace(/^Category:/, "") }))
+      .filter((item, index, items) => items.findIndex((candidate) => candidate.title === item.title) === index)
+      .slice(0, 8)
+    : [];
+  return { topics, customCategories };
+}
+
 function readSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    const saved = raw ? JSON.parse(raw) : {};
-    return TOPICS[saved.topic] ? { ...DEFAULT_SETTINGS, ...saved } : DEFAULT_SETTINGS;
+    return normalizeSettings(raw ? JSON.parse(raw) : DEFAULT_SETTINGS);
   } catch {
     return DEFAULT_SETTINGS;
   }
@@ -120,12 +135,44 @@ function incrementStat(name) {
 
 /* ----------------------------------------------------------- settings -- */
 
-function renderSettings() {
-  const settings = readSettings();
-  document.querySelectorAll('input[name="topic"]').forEach((input) => {
-    input.checked = input.value === settings.topic;
+let draftSettings = null;
+let categorySearchTimer = null;
+
+function hasSelection(settings) {
+  return settings.topics.length > 0 || settings.customCategories.length > 0;
+}
+
+function renderCustomCategories() {
+  const categories = draftSettings?.customCategories || [];
+  document.querySelectorAll(".selected-category").forEach((button, index) => {
+    const category = categories[index];
+    button.hidden = !category;
+    if (category) {
+      button.textContent = category.label;
+      button.dataset.category = category.title;
+      button.setAttribute("aria-label", `Remove ${category.label}`);
+    }
   });
+}
+
+function renderSettings() {
+  draftSettings = readSettings();
+  document.querySelectorAll('input[name="topic"]').forEach((input) => {
+    input.checked = input.value === "all"
+      ? !hasSelection(draftSettings)
+      : draftSettings.topics.includes(input.value);
+  });
+  renderCustomCategories();
   updateStatsUI();
+}
+
+function refreshTopicInputs() {
+  document.querySelectorAll('input[name="topic"]').forEach((input) => {
+    input.checked = input.value === "all"
+      ? !hasSelection(draftSettings)
+      : draftSettings.topics.includes(input.value);
+  });
+  renderCustomCategories();
 }
 
 function setSettingsOpen(open) {
@@ -318,23 +365,28 @@ async function fetchJSON(url) {
   return res.json();
 }
 
-async function fetchCategoryEntries(category) {
-  const members = await fetchJSON(window.WikipediaTopics.categoryMembersURL(category));
-  const candidates = members?.query?.categorymembers || [];
+async function fetchCategoryEntries(categories) {
+  const memberResponses = await Promise.all(
+    categories.map((category) => fetchJSON(window.WikipediaTopics.categoryMembersURL(category))),
+  );
+  const candidates = memberResponses.flatMap((response) => response?.query?.categorymembers || []);
   const pageIds = shuffle(candidates)
-    .slice(0, Math.min(candidates.length, FETCH_COUNT * 3))
+    .slice(0, Math.min(candidates.length, 48))
     .map((page) => page.pageid)
     .filter(Boolean);
   if (!pageIds.length) return [];
 
-  const data = await fetchJSON(window.WikipediaTopics.pageLookupURL(pageIds));
+  const data = await fetchJSON(window.WikipediaTopics.pageLookupURL([...new Set(pageIds)]));
   return (data?.query?.pages || []).filter(keep).map(toEntry);
 }
 
 async function fetchEntries() {
   const settings = readSettings();
-  const topic = TOPICS[settings.topic] || TOPICS.all;
-  if (topic.category) return fetchCategoryEntries(topic.category);
+  const categories = [
+    ...settings.topics.map((id) => TOPICS[id]?.category).filter(Boolean),
+    ...settings.customCategories.map((category) => category.title),
+  ];
+  if (categories.length) return fetchCategoryEntries(categories);
 
   const data = await fetchJSON(apiUrl());
   return (data?.query?.pages || []).filter(keep).map(toEntry);
@@ -417,27 +469,112 @@ function wireViewer() {
   viewer.addEventListener("close", () => viewerImg.removeAttribute("src"));
 }
 
+async function searchCategories(query) {
+  const status = el("category-search-status");
+  const trimmed = query.trim();
+  if (trimmed.length < 2) {
+    status.textContent = trimmed ? "Type at least two letters." : "";
+    document.querySelectorAll(".category-result").forEach((button) => { button.hidden = true; });
+    return;
+  }
+
+  status.textContent = "Searching Wikipedia…";
+  try {
+    const data = await fetchJSON(window.WikipediaTopics.categorySearchURL(trimmed));
+    const results = (data?.query?.search || [])
+      .filter((item) => item.title?.startsWith("Category:"))
+      .map((item) => ({ title: item.title, label: item.title.replace(/^Category:/, "") }));
+    document.querySelectorAll(".category-result").forEach((button, index) => {
+      const result = results[index];
+      button.hidden = !result;
+      if (result) {
+        button.textContent = result.label;
+        button.dataset.category = result.title;
+        button.dataset.label = result.label;
+      }
+    });
+    status.textContent = results.length ? "Select a section to add it." : "No matching sections found.";
+  } catch {
+    status.textContent = "Wikipedia could not be searched right now.";
+  }
+}
+
+function addCustomCategory(title, label) {
+  if (!draftSettings || draftSettings.customCategories.some((item) => item.title === title)) return;
+  if (draftSettings.customCategories.length >= 8) return;
+  draftSettings.customCategories.push({ title, label });
+  refreshTopicInputs();
+}
+
+function removeCustomCategory(title) {
+  if (!draftSettings) return;
+  draftSettings.customCategories = draftSettings.customCategories.filter((item) => item.title !== title);
+  refreshTopicInputs();
+}
+
+function syncTopicDraft(event) {
+  if (!draftSettings) return;
+  const input = event.target;
+  if (input.value === "all") {
+    if (input.checked) {
+      draftSettings.topics = [];
+      draftSettings.customCategories = [];
+    }
+  } else if (input.checked) {
+    if (!draftSettings.topics.includes(input.value)) draftSettings.topics.push(input.value);
+  } else {
+    draftSettings.topics = draftSettings.topics.filter((id) => id !== input.value);
+  }
+  refreshTopicInputs();
+}
+
 function wireSettings() {
   const toggle = el("settings-toggle");
   const close = el("settings-close");
   const form = el("settings-form");
+  const moreToggle = el("more-toggle");
+  const moreBody = el("more-categories-body");
 
   toggle.addEventListener("click", () => {
     setSettingsOpen(el("settings-panel").hidden);
   });
   close.addEventListener("click", () => setSettingsOpen(false));
 
+  document.querySelectorAll('input[name="topic"]').forEach((input) => {
+    input.addEventListener("change", syncTopicDraft);
+  });
+
+  moreToggle.addEventListener("click", () => {
+    const open = moreBody.hidden;
+    moreBody.hidden = !open;
+    moreToggle.setAttribute("aria-expanded", String(open));
+    moreToggle.querySelector("span").textContent = open ? "−" : "+";
+  });
+
+  el("category-search").addEventListener("input", (event) => {
+    clearTimeout(categorySearchTimer);
+    categorySearchTimer = setTimeout(() => searchCategories(event.target.value), 250);
+  });
+
+  document.querySelectorAll(".category-result").forEach((button) => {
+    button.addEventListener("click", () => {
+      addCustomCategory(button.dataset.category, button.dataset.label);
+    });
+  });
+
+  document.querySelectorAll(".selected-category").forEach((button) => {
+    button.addEventListener("click", () => removeCustomCategory(button.dataset.category));
+  });
+
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    const selected = new FormData(form).get("topic");
-    if (!TOPICS[selected]) return;
-
+    const next = normalizeSettings(draftSettings || DEFAULT_SETTINGS);
     const previous = readSettings();
-    writeSettings({ topic: selected });
+    writeSettings(next);
     setSettingsOpen(false);
-    if (previous.topic === selected) return;
+    if (JSON.stringify(previous) === JSON.stringify(next)) return;
 
-    // A queue from another section should never leak into the new section.
+    // A queue from another section should never leak into the new selection.
     writeQueue([]);
     el("entry").hidden = true;
     (async () => {

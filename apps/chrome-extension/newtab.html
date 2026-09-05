@@ -51,17 +51,50 @@
       </div>
 
       <fieldset class="topic-list">
-        <legend>Choose a section</legend>
-        <label><input type="radio" name="topic" value="all"> All sections</label>
-        <label><input type="radio" name="topic" value="physics"> Physics</label>
-        <label><input type="radio" name="topic" value="history"> History</label>
-        <label><input type="radio" name="topic" value="mathematics"> Mathematics</label>
-        <label><input type="radio" name="topic" value="technology"> Technology</label>
-        <label><input type="radio" name="topic" value="geography"> Geography</label>
-        <label><input type="radio" name="topic" value="art"> Art</label>
-        <label><input type="radio" name="topic" value="music"> Music</label>
-        <label><input type="radio" name="topic" value="literature"> Literature</label>
+        <legend>Choose sections</legend>
+        <label class="all-option"><input type="checkbox" name="topic" value="all"> All sections <span>random</span></label>
+        <p class="topic-subhead">CURATED</p>
+        <label><input type="checkbox" name="topic" value="physics"> Physics</label>
+        <label><input type="checkbox" name="topic" value="history"> History</label>
+        <label><input type="checkbox" name="topic" value="mathematics"> Mathematics</label>
+        <label><input type="checkbox" name="topic" value="technology"> Technology</label>
+        <label><input type="checkbox" name="topic" value="geography"> Geography</label>
+        <label><input type="checkbox" name="topic" value="art"> Art</label>
+        <label><input type="checkbox" name="topic" value="music"> Music</label>
+        <label><input type="checkbox" name="topic" value="literature"> Literature</label>
       </fieldset>
+
+      <section class="more-categories">
+        <button class="more-toggle" id="more-toggle" type="button" aria-expanded="false" aria-controls="more-categories-body">
+          More sections <span aria-hidden="true">+</span>
+        </button>
+        <div id="more-categories-body" class="more-categories-body" hidden>
+          <label class="category-search-label" for="category-search">Search Wikipedia categories</label>
+          <input id="category-search" class="category-search" type="search" placeholder="e.g. archaeology" autocomplete="off">
+          <p class="search-status" id="category-search-status" aria-live="polite"></p>
+          <div class="category-results" aria-label="Category search results">
+            <button class="category-result" data-slot="0" type="button" hidden></button>
+            <button class="category-result" data-slot="1" type="button" hidden></button>
+            <button class="category-result" data-slot="2" type="button" hidden></button>
+            <button class="category-result" data-slot="3" type="button" hidden></button>
+            <button class="category-result" data-slot="4" type="button" hidden></button>
+            <button class="category-result" data-slot="5" type="button" hidden></button>
+            <button class="category-result" data-slot="6" type="button" hidden></button>
+            <button class="category-result" data-slot="7" type="button" hidden></button>
+          </div>
+          <p class="selected-label">SELECTED EXTRA SECTIONS</p>
+          <div class="selected-categories" aria-label="Selected extra sections">
+            <button class="selected-category" data-slot="0" type="button" hidden></button>
+            <button class="selected-category" data-slot="1" type="button" hidden></button>
+            <button class="selected-category" data-slot="2" type="button" hidden></button>
+            <button class="selected-category" data-slot="3" type="button" hidden></button>
+            <button class="selected-category" data-slot="4" type="button" hidden></button>
+            <button class="selected-category" data-slot="5" type="button" hidden></button>
+            <button class="selected-category" data-slot="6" type="button" hidden></button>
+            <button class="selected-category" data-slot="7" type="button" hidden></button>
+          </div>
+        </div>
+      </section>
 
       <section class="progress" aria-labelledby="progress-heading">
         <p class="panel-kicker" id="progress-heading">YOUR PROGRESS</p>

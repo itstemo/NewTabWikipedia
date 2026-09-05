@@ -21,9 +21,10 @@ packages/wikipedia/       Shared article types, API request, and filters
 4. Select `apps/chrome-extension`.
 
 The extension is deliberately dependency-free and uses a local queue so a new
-Tab can paint before the network responds. Its settings panel selects real
-Wikipedia sections through the categorymembers API and keeps local counters
-for articles encountered and full entries opened.
+Tab can paint before the network responds. Its settings panel keeps curated
+Wikipedia sections visible, supports searchable custom categories and multiple
+selections, and keeps local counters for articles encountered and full entries
+opened.
 
 ## Mobile development
 

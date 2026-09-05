@@ -56,6 +56,15 @@ test('converts an API page into an app article', () => {
   });
 });
 
+test('falls back to the original image source when no thumbnail exists', () => {
+  const article = toArticle(page({
+    thumbnail: undefined,
+    original: { source: 'https://upload.wikimedia.org/original.jpg' },
+  }));
+
+  assert.equal(article?.imageUrl, 'https://upload.wikimedia.org/original.jpg');
+});
+
 test('does not convert pages without a canonical URL', () => {
   assert.equal(toArticle(page({ fullurl: undefined })), null);
 });

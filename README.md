@@ -21,7 +21,10 @@ packages/wikipedia/       Shared article types, API request, and filters
 4. Select `apps/chrome-extension`.
 
 The extension is deliberately dependency-free and uses a local queue so a new
-Tab can paint before the network responds.
+Tab can paint before the network responds. Its settings panel keeps curated
+Wikipedia sections visible, supports searchable custom categories and multiple
+selections, and keeps local counters for articles encountered and full entries
+opened.
 
 ## Mobile development
 
@@ -68,6 +71,6 @@ Apple's TestFlight beta review.
 
 - Wikipedia requests are made directly from the clients; no server or API key
   is required.
-- The app saves the latest article locally and schedules a small batch of
-  articles for the widget timeline.
+- The app saves the latest article locally, prefers image-backed entries, and
+  schedules a small batch of articles for the widget timeline.
 - iOS controls the exact timing of background widget refreshes.

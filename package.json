@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "test": "tsx --test packages/wikipedia/src/index.test.ts",
+    "test": "tsx --test packages/wikipedia/src/index.test.ts apps/chrome-extension/topics.test.js",
     "typecheck": "npm run typecheck --workspace apps/mobile"
   },
   "devDependencies": {

@@ -75,7 +75,9 @@ export default function App() {
 
     try {
       const articles = await fetchRandomArticles();
-      const next = articles[Math.floor(Math.random() * articles.length)];
+      const withImages = articles.filter((candidate) => candidate.imageUrl);
+      const candidates = withImages.length ? withImages : articles;
+      const next = candidates[Math.floor(Math.random() * candidates.length)];
       if (!next) throw new Error('No usable articles returned');
 
       setArticle(next);
@@ -150,20 +152,31 @@ export default function App() {
 }
 
 function ArticleContent({ article, onOpen }: { article: WikipediaArticle; onOpen: () => Promise<void> }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [article.id]);
+
   return (
     <View>
       {article.description ? <Text style={styles.description}>{article.description.toUpperCase()}</Text> : null}
       <Text style={styles.title}>{article.title}</Text>
       <View style={styles.rule} />
 
-      {article.imageUrl ? (
+      {article.imageUrl && !imageFailed ? (
         <Image
           accessibilityLabel={article.description || article.title}
           source={{ uri: article.imageUrl }}
           resizeMode="cover"
+          onError={() => setImageFailed(true)}
           style={styles.image}
         />
-      ) : null}
+      ) : (
+        <View accessibilityLabel="No image available" style={styles.imageFallback}>
+          <Text style={styles.imageFallbackLetter}>{article.title.slice(0, 1).toUpperCase()}</Text>
+        </View>
+      )}
 
       <Text selectable style={styles.extract}>
         {article.extract}
@@ -212,6 +225,15 @@ const styles = StyleSheet.create({
   title: { color: COLORS.ink, fontFamily: 'Georgia', fontSize: 38, lineHeight: 44, marginBottom: 24 },
   rule: { height: 1, backgroundColor: COLORS.rule, marginBottom: 22 },
   image: { width: '100%', height: 220, marginBottom: 24, backgroundColor: COLORS.rule },
+  imageFallback: {
+    width: '100%',
+    height: 220,
+    marginBottom: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.rule,
+  },
+  imageFallbackLetter: { color: COLORS.muted, fontFamily: 'Georgia', fontSize: 72 },
   extract: { color: COLORS.ink, fontFamily: 'Georgia', fontSize: 18, lineHeight: 30 },
   readButton: { alignSelf: 'flex-start', marginTop: 30, paddingVertical: 8 },
   readButtonText: { color: COLORS.accent, fontSize: 11, fontWeight: '700', letterSpacing: 1.3 },

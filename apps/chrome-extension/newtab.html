@@ -2,18 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <!-- Paints the correct backdrop before the stylesheet lands. Without this,
-       every tab flashes white in dark mode. -->
   <meta name="color-scheme" content="light dark">
   <title>New Tab</title>
   <link rel="stylesheet" href="newtab.css">
 </head>
 <body>
-  <!-- The skeleton is static and complete. JS only fills text nodes and
-       attributes, never builds DOM, so the first paint has final geometry. -->
-  <!-- The head spans both columns so the rule runs the full width of the
-       page, and so the plate's top edge lines up with the first line of the
-       paragraph no matter how many lines the headword takes. -->
+  <button class="settings-toggle" id="settings-toggle" type="button"
+          aria-expanded="false" aria-controls="settings-panel">
+    <span aria-hidden="true">⚙</span> Settings
+  </button>
+
   <main class="entry" id="entry" hidden>
     <header class="head">
       <p class="gloss" id="gloss"></p>
@@ -30,9 +28,6 @@
       </nav>
     </div>
 
-    <!-- No caption: the only text the API offers for it is `description`,
-         which is already the gloss. Repeating it under the plate is
-         redundancy, not encyclopedia texture. -->
     <figure class="plate">
       <button class="plate-btn" id="plate-btn" type="button" hidden
               aria-label="View this plate at full size">
@@ -45,11 +40,47 @@
     <img id="viewer-img" alt="">
   </dialog>
 
+  <aside class="settings-panel" id="settings-panel" hidden aria-label="New tab settings">
+    <form id="settings-form">
+      <div class="settings-header">
+        <div>
+          <p class="panel-kicker">PERSONALIZE</p>
+          <h2>New tab settings</h2>
+        </div>
+        <button class="panel-close" id="settings-close" type="button" aria-label="Close settings">&times;</button>
+      </div>
+
+      <fieldset class="topic-list">
+        <legend>Choose a section</legend>
+        <label><input type="radio" name="topic" value="all"> All sections</label>
+        <label><input type="radio" name="topic" value="physics"> Physics</label>
+        <label><input type="radio" name="topic" value="history"> History</label>
+        <label><input type="radio" name="topic" value="mathematics"> Mathematics</label>
+        <label><input type="radio" name="topic" value="technology"> Technology</label>
+        <label><input type="radio" name="topic" value="geography"> Geography</label>
+        <label><input type="radio" name="topic" value="art"> Art</label>
+        <label><input type="radio" name="topic" value="music"> Music</label>
+        <label><input type="radio" name="topic" value="literature"> Literature</label>
+      </fieldset>
+
+      <section class="progress" aria-labelledby="progress-heading">
+        <p class="panel-kicker" id="progress-heading">YOUR PROGRESS</p>
+        <dl class="stats">
+          <div><dt id="article-count">0</dt><dd>articles encountered</dd></div>
+          <div><dt id="link-count">0</dt><dd>full entries opened</dd></div>
+        </dl>
+      </section>
+
+      <button class="action panel-apply" type="submit">Apply section <span aria-hidden="true">&rarr;</span></button>
+    </form>
+  </aside>
+
   <aside class="index" id="index" aria-hidden="true">
     <span class="index-letter" id="index-letter"></span>
     <span class="index-number" id="index-number"></span>
   </aside>
 
+  <script src="topics.js"></script>
   <script src="newtab.js"></script>
 </body>
 </html>

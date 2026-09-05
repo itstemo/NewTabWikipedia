@@ -14,6 +14,12 @@
 
 const QUEUE_KEY = "wnt.queue";
 const LAST_KEY = "wnt.last";
+const SETTINGS_KEY = "wnt.settings";
+const STATS_KEY = "wnt.stats";
+
+const DEFAULT_SETTINGS = { topic: "all" };
+const DEFAULT_STATS = { articles: 0, links: 0 };
+const TOPICS = window.WikipediaTopics.TOPICS;
 
 const QUEUE_TARGET = 8;   // a few days of casual use, offline
 const QUEUE_MIN = 4;      // top up when we drop below this
@@ -62,6 +68,72 @@ function readLast() {
   } catch {
     return null;
   }
+}
+
+function readSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    const saved = raw ? JSON.parse(raw) : {};
+    return TOPICS[saved.topic] ? { ...DEFAULT_SETTINGS, ...saved } : DEFAULT_SETTINGS;
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
+function writeSettings(settings) {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch { /* non-fatal */ }
+}
+
+function readStats() {
+  try {
+    const raw = localStorage.getItem(STATS_KEY);
+    const saved = raw ? JSON.parse(raw) : {};
+    return {
+      articles: Number.isFinite(saved.articles) ? saved.articles : DEFAULT_STATS.articles,
+      links: Number.isFinite(saved.links) ? saved.links : DEFAULT_STATS.links,
+    };
+  } catch {
+    return DEFAULT_STATS;
+  }
+}
+
+function writeStats(stats) {
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  } catch { /* non-fatal */ }
+}
+
+function updateStatsUI() {
+  const stats = readStats();
+  el("article-count").textContent = String(stats.articles);
+  el("link-count").textContent = String(stats.links);
+}
+
+function incrementStat(name) {
+  const stats = readStats();
+  stats[name] += 1;
+  writeStats(stats);
+  updateStatsUI();
+}
+
+/* ----------------------------------------------------------- settings -- */
+
+function renderSettings() {
+  const settings = readSettings();
+  document.querySelectorAll('input[name="topic"]').forEach((input) => {
+    input.checked = input.value === settings.topic;
+  });
+  updateStatsUI();
+}
+
+function setSettingsOpen(open) {
+  const panel = el("settings-panel");
+  const toggle = el("settings-toggle");
+  panel.hidden = !open;
+  toggle.setAttribute("aria-expanded", String(open));
+  if (open) renderSettings();
 }
 
 /* ------------------------------------------------------------ images -- */
@@ -174,6 +246,7 @@ function render(entry, { stale = false } = {}) {
   el("index-number").textContent = "№ " + entry.pageid;
 
   el("entry").hidden = false;
+  if (!stale) incrementStat("articles");
 
   try {
     localStorage.setItem(LAST_KEY, JSON.stringify(entry));
@@ -230,10 +303,40 @@ function toEntry(page) {
   };
 }
 
-async function fetchEntries() {
-  const res = await fetch(apiUrl(), { cache: "no-store" });
+function shuffle(items) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+async function fetchJSON(url) {
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
+  return res.json();
+}
+
+async function fetchCategoryEntries(category) {
+  const members = await fetchJSON(window.WikipediaTopics.categoryMembersURL(category));
+  const candidates = members?.query?.categorymembers || [];
+  const pageIds = shuffle(candidates)
+    .slice(0, Math.min(candidates.length, FETCH_COUNT * 3))
+    .map((page) => page.pageid)
+    .filter(Boolean);
+  if (!pageIds.length) return [];
+
+  const data = await fetchJSON(window.WikipediaTopics.pageLookupURL(pageIds));
+  return (data?.query?.pages || []).filter(keep).map(toEntry);
+}
+
+async function fetchEntries() {
+  const settings = readSettings();
+  const topic = TOPICS[settings.topic] || TOPICS.all;
+  if (topic.category) return fetchCategoryEntries(topic.category);
+
+  const data = await fetchJSON(apiUrl());
   return (data?.query?.pages || []).filter(keep).map(toEntry);
 }
 
@@ -314,8 +417,46 @@ function wireViewer() {
   viewer.addEventListener("close", () => viewerImg.removeAttribute("src"));
 }
 
+function wireSettings() {
+  const toggle = el("settings-toggle");
+  const close = el("settings-close");
+  const form = el("settings-form");
+
+  toggle.addEventListener("click", () => {
+    setSettingsOpen(el("settings-panel").hidden);
+  });
+  close.addEventListener("click", () => setSettingsOpen(false));
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const selected = new FormData(form).get("topic");
+    if (!TOPICS[selected]) return;
+
+    const previous = readSettings();
+    writeSettings({ topic: selected });
+    setSettingsOpen(false);
+    if (previous.topic === selected) return;
+
+    // A queue from another section should never leak into the new section.
+    writeQueue([]);
+    el("entry").hidden = true;
+    (async () => {
+      await coldStart();
+      await topUp();
+    })();
+  });
+}
+
+function trackLinkOpen() {
+  incrementStat("links");
+}
+
 function boot() {
   wireViewer();
+  wireSettings();
+  el("headword").addEventListener("click", trackLinkOpen);
+  el("read").addEventListener("click", trackLinkOpen);
+  updateStatsUI();
 
   if (advance()) {
     // Painted from cache. Refill in the background, off the critical path.
@@ -330,6 +471,10 @@ function boot() {
   });
 
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !el("settings-panel").hidden) {
+      setSettingsOpen(false);
+      return;
+    }
     if (e.key !== "r" && e.key !== "R") return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (el("viewer").open) return; // Escape closes the viewer; R does nothing

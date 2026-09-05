@@ -11,6 +11,9 @@ export type WikipediaPage = {
   thumbnail?: {
     source?: string;
   };
+  original?: {
+    source?: string;
+  };
 };
 
 export type WikipediaArticle = {
@@ -46,7 +49,7 @@ export function buildRandomArticleURL(limit = 12): string {
     exintro: '1',
     explaintext: '1',
     exsentences: '5',
-    piprop: 'thumbnail',
+    piprop: 'thumbnail|original',
     pithumbsize: '900',
     inprop: 'url',
   };
@@ -86,7 +89,7 @@ export function toArticle(page: WikipediaPage): WikipediaArticle | null {
     description: page.description?.trim() ?? '',
     extract: cleanExtract(page.extract!),
     url: page.fullurl!,
-    imageUrl: page.thumbnail?.source ?? null,
+    imageUrl: page.thumbnail?.source ?? page.original?.source ?? null,
   };
 }
 

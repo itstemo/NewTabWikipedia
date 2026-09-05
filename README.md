@@ -1,76 +1,73 @@
 # Wikipedia New Tab
 
-A Chrome extension that replaces the new tab page with a single encyclopedia
-entry — headword, gloss, a paragraph, a plate — and an obvious way into the
-full article.
+A small monorepo for two ways to discover a random Wikipedia article:
 
-The design reference is a page from a printed encyclopedia volume, not a
-newspaper front page: hairline rules, a portrait plate with a condensed
-caption, and a thumb index on the right edge carrying the entry's first
-letter and its page number.
+- A Chrome MV3 extension that replaces every new tab with an encyclopedia entry.
+- An Expo mobile app with an iOS Home Screen widget.
 
-## Install
+## Repository layout
 
-1. `chrome://extensions`
-2. Enable **Developer mode**
-3. **Load unpacked** → select this directory
-
-## How it works
-
-`chrome.storage.local` is async, and a new tab that waits a frame for storage
-is a new tab that flashes. So the queue lives in `localStorage`: eight
-prepared entries, read synchronously and painted in the first script turn.
-The network is never on the critical path.
-
-- **Paint** — shift one entry off the queue, render, done.
-- **Refill** — asynchronously, when the queue drops below four. One
-  `generator=random` request returns a dozen entries at once.
-- **Filter** — at write time, never at render time. Entries shorter than 300
-  characters are stubs; sports seasons, squad lists and election tables are
-  rejected by description. See `REJECT_DESCRIPTION` in `newtab.js` — that is
-  the single knob for entry quality.
-- **Offline** — the queue is the offline story. When it empties offline, the
-  last entry returns with a quiet line. Fetch failures are never surfaced.
-
-Entries without an image keep the column's width and simply leave it empty —
-the text measure never shifts between tabs.
-
-## Plates
-
-The plate is small on purpose, a book plate rather than a hero: 152px, 4:5,
-hairline rule, no shadow. Clicking it opens the photograph at viewport size.
-
-Sizing has one non-obvious constraint. Commons thumbnail URLs carry their
-width in the path, but **only a fixed set of widths exists** — 20, 40, 60,
-120, 250, 330, 500, 960, 1280, 1920, 3840. Hotlinking any other width returns
-a 400, not a smaller image ([T414805][t], [common thumbnail sizes][s]), so
-rewriting a URL to `336px` produces a broken plate. `newtab.js` rounds up to
-the nearest step, capped by the original's width so MediaWiki is never asked
-for an upscale — except for SVGs, whose nominal width is not a resolution
-limit.
-
-[t]: https://phabricator.wikimedia.org/T414805
-[s]: https://www.mediawiki.org/wiki/Common_thumbnail_sizes
-
-## Interactions
-
-| | |
-| --- | --- |
-| `R` / *Another entry* | next entry from the queue, no reload |
-| Headword / *Read the full entry* | opens the article in the same tab |
-| Click the plate | the photograph at viewport size; `Esc` or click closes |
-
-## Files
-
-```
-manifest.json   MV3, chrome_url_overrides.newtab
-newtab.html     static skeleton — JS fills text, never builds DOM
-newtab.css      tokens, grid, thumb index, dark mode
-newtab.js       queue, fetch, filters, render
-fonts/          bundled woff2 (see fonts/README.md)
+```text
+apps/chrome-extension/   Chrome new-tab extension
+apps/mobile/              Expo iOS app and widget
+packages/wikipedia/       Shared article types, API request, and filters
 ```
 
-No permissions are requested. The Wikipedia API is called with `origin=*`,
-which returns `Access-Control-Allow-Origin: *`, so no host permissions are
-needed; the queue uses `localStorage`, so no `storage` permission is needed
-either.
+## Chrome extension
+
+1. Open `chrome://extensions`.
+2. Enable **Developer mode**.
+3. Choose **Load unpacked**.
+4. Select `apps/chrome-extension`.
+
+The extension is deliberately dependency-free and uses a local queue so a new
+Tab can paint before the network responds.
+
+## Mobile development
+
+From the repository root:
+
+```bash
+npm install
+npm run typecheck
+npm test
+```
+
+Run the Expo development server:
+
+```bash
+cd apps/mobile
+npm start
+```
+
+The widget is a native iOS extension and is not available in Expo Go. Use an
+Expo development build or a prebuild-generated Xcode project:
+
+```bash
+cd apps/mobile
+npx expo prebuild
+npx expo run:ios
+```
+
+## TestFlight
+
+After an Apple Developer account and App Store Connect app record exist:
+
+```bash
+cd apps/mobile
+npx eas-cli login
+eas build --platform ios --profile production
+eas submit --platform ios
+```
+
+The `production` profile uploads a signed iOS build to App Store Connect, where
+it can be added to an internal TestFlight group. External testers require
+Apple's TestFlight beta review.
+
+## Notes
+
+- Wikipedia requests are made directly from the clients; no server or API key
+  is required.
+- The app saves the latest article locally and schedules a small batch of
+  articles for the widget timeline.
+- iOS controls the exact timing of background widget refreshes.

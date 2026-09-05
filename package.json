@@ -1,0 +1,12 @@
+{
+  "name": "newtab-wikipedia",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "test": "tsx --test packages/wikipedia/src/index.test.ts",
+    "typecheck": "npm run typecheck --workspace apps/mobile"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  }
+}

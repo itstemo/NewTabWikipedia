@@ -1,5 +1,10 @@
 (function (global) {
-  const API = 'https://en.wikipedia.org/w/api.php';
+  // Category titles are English — curated sections only apply when the
+  // language setting is English. Everything else parameterizes cleanly.
+  function apiBase(language) {
+    const lang = /^[a-z][a-z0-9-]*$/i.test(language || '') ? language.toLowerCase() : 'en';
+    return `https://${lang}.wikipedia.org/w/api.php`;
+  }
 
   // These are real Wikipedia category titles, not UI-only labels.
   const TOPICS = Object.freeze({
@@ -14,8 +19,8 @@
     literature: { label: 'Literature', category: 'Category:Literature' },
   });
 
-  function categoryMembersURL(category, limit = 500) {
-    const url = new URL(API);
+  function categoryMembersURL(category, limit = 500, language) {
+    const url = new URL(apiBase(language));
     const params = {
       action: 'query',
       format: 'json',
@@ -31,18 +36,19 @@
     return url.toString();
   }
 
-  function pageLookupURL(pageIds) {
-    const url = new URL(API);
+  function pageLookupURL(pageIds, language) {
+    const url = new URL(apiBase(language));
     const params = {
       action: 'query',
       format: 'json',
       formatversion: '2',
       origin: '*',
       pageids: pageIds.join('|'),
-      prop: 'extracts|pageimages|info',
+      prop: 'extracts|pageimages|description|info',
       exintro: '1',
       explaintext: '1',
       exsentences: '5',
+      exlimit: 'max',
       piprop: 'thumbnail|original',
       pithumbsize: '900',
       inprop: 'url',
@@ -51,8 +57,8 @@
     return url.toString();
   }
 
-  function categorySearchURL(query, limit = 10) {
-    const url = new URL(API);
+  function categorySearchURL(query, limit = 10, language) {
+    const url = new URL(apiBase(language));
     const params = {
       action: 'query',
       format: 'json',
@@ -67,7 +73,7 @@
     return url.toString();
   }
 
-  const api = { TOPICS, categoryMembersURL, categorySearchURL, pageLookupURL };
+  const api = { TOPICS, apiBase, categoryMembersURL, categorySearchURL, pageLookupURL };
   global.WikipediaTopics = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : window);

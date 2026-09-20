@@ -1,31 +1,99 @@
 /* ---------------------------------------------------------------- fonts --
    Bundled locally on purpose: a new tab must never wait on a CDN, and a
-   font swapping in 40 times a day is intolerable. Drop the .woff2 files
-   into /fonts (see fonts/README.md) and these rules take over; until then
-   the stacks below fall through to system faces and the layout is the same.
+   font swapping in 40 times a day is intolerable. Spectral and IBM Plex
+   Mono, latin + latin-ext subsets (see fonts/README.md). Until the files
+   exist the stacks fall through to system faces; the layout is unchanged.
    -------------------------------------------------------------------- */
 @font-face {
-  font-family: "Newsreader";
-  src: url("fonts/Newsreader.woff2") format("woff2-variations");
-  font-weight: 400 600;
-  font-display: block;
+  font-family: "Spectral";
+  src: url("fonts/Spectral-300-latin-ext.woff2") format("woff2");
+  font-weight: 300; font-style: normal; font-display: block;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
-  font-family: "Plex Condensed";
-  src: url("fonts/IBMPlexSansCondensed-Regular.woff2") format("woff2");
-  font-weight: 400;
-  font-display: block;
+  font-family: "Spectral";
+  src: url("fonts/Spectral-300-latin.woff2") format("woff2");
+  font-weight: 300; font-style: normal; font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Spectral";
+  src: url("fonts/Spectral-400-latin-ext.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: block;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Spectral";
+  src: url("fonts/Spectral-400-latin.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Spectral";
+  src: url("fonts/Spectral-400i-latin-ext.woff2") format("woff2");
+  font-weight: 400; font-style: italic; font-display: block;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Spectral";
+  src: url("fonts/Spectral-400i-latin.woff2") format("woff2");
+  font-weight: 400; font-style: italic; font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Spectral";
+  src: url("fonts/Spectral-600-latin-ext.woff2") format("woff2");
+  font-weight: 600; font-style: normal; font-display: block;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Spectral";
+  src: url("fonts/Spectral-600-latin.woff2") format("woff2");
+  font-weight: 600; font-style: normal; font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("fonts/IBMPlexMono-400-latin-ext.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: block;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("fonts/IBMPlexMono-400-latin.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("fonts/IBMPlexMono-500-latin-ext.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: block;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("fonts/IBMPlexMono-500-latin.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Tokens from the Barbechero manual (docs/design-system.md): warm paper,
+   one warm ink carried by alpha, a single terracotta accent ("tinta viva"),
+   hairline rules. No shadows, no radius, no color on hover — hover is
+   papel hondo. */
 :root {
-  --paper: #F5F4F0;
-  --ink: #17181C;
-  --muted: #6B6C72;
-  --rule: #D6D4CC;
-  --accent: #2F4B96;
+  --paper: #F7F5EE;
+  --paper-deep: #EFEAE0;
+  --paper-edge: #E6DFD0;
+  --ink: #211D17;
+  --muted: rgb(33 29 23 / 0.55);
+  --faint: rgb(33 29 23 / 0.45);
+  --rule: rgb(33 29 23 / 0.25);
+  --rule-strong: var(--ink);
+  --accent: #9D5035;
 
-  --serif: "Newsreader", "Iowan Old Style", "Charter", Georgia, serif;
-  --cond: "Plex Condensed", "Avenir Next Condensed", "Helvetica Neue", sans-serif;
+  --serif: "Spectral", "Iowan Old Style", "Charter", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   /* ~62 characters at the body size. Kept in px, not ch: ch resolves against
      the *parent's* font, which is not the face the paragraph is set in. */
@@ -34,13 +102,31 @@
   --gap: 44px;
 }
 
+/* The manual defines no dark scheme; this keeps its relationships — warm
+   ground, paper-colored ink, the accent lifted to hold contrast. */
+:root[data-theme="dark"] {
+  --paper: #1B1813;
+  --paper-deep: #262019;
+  --paper-edge: #2E2820;
+  --ink: #F4F0E6;
+  --muted: rgb(244 240 230 / 0.55);
+  --faint: rgb(244 240 230 / 0.45);
+  --rule: rgb(244 240 230 / 0.22);
+  --rule-strong: rgb(244 240 230 / 0.8);
+  --accent: #CB7A5D;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #15171B;
-    --ink: #E9E7E1;
-    --muted: #8B8D95;
-    --rule: #2B2E35;
-    --accent: #86A4EC;
+  :root:not([data-theme]), :root[data-theme="system"] {
+    --paper: #1B1813;
+    --paper-deep: #262019;
+    --paper-edge: #2E2820;
+    --ink: #F4F0E6;
+    --muted: rgb(244 240 230 / 0.55);
+    --faint: rgb(244 240 230 / 0.45);
+    --rule: rgb(244 240 230 / 0.22);
+    --rule-strong: rgb(244 240 230 / 0.8);
+    --accent: #CB7A5D;
   }
 }
 
@@ -85,44 +171,45 @@ body {
 
 .text { min-width: 0; }
 
+/* The description is the entry's descriptor — the manual reserves italic
+   for exactly this role. */
 .gloss {
   margin: 0 0 10px;
-  font-family: var(--cond);
-  font-size: 11px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
   line-height: 1.2;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
   color: var(--muted);
-  min-height: 13px; /* reserved: entries without a description keep the gap */
+  min-height: 18px; /* reserved: entries without a description keep the gap */
 }
 
+/* Screen headlines take 600 — the manual's screen-only weight. */
 .headword {
   margin: 0;
   font-size: 38px;
   line-height: 1.1;
-  font-weight: 500;
-  font-variation-settings: "opsz" 36;
+  font-weight: 600;
   letter-spacing: -0.005em;
   text-wrap: balance;
 }
 
+/* The rule under the headword is the page's major rule — full ink. */
 .rule {
   margin: 22px 0 20px;
   border: 0;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--rule-strong);
 }
 
 .body {
   margin: 0;
   font-size: 17.5px;
   line-height: 1.62;
-  font-variation-settings: "opsz" 16;
   hyphens: auto;
 }
 
 .notice {
   margin: 18px 0 0;
-  font-family: var(--cond);
+  font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--muted);
@@ -187,7 +274,7 @@ a { color: inherit; }
 .headword a:hover { text-decoration-color: var(--rule); }
 
 .action {
-  font-family: var(--cond);
+  font-family: var(--mono);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
@@ -241,7 +328,7 @@ kbd {
   border-left: 1px solid var(--rule);
   border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
-  font-family: var(--cond);
+  font-family: var(--mono);
   color: var(--muted);
 }
 
@@ -323,7 +410,7 @@ kbd {
   background: none;
   color: var(--muted);
   cursor: pointer;
-  font-family: var(--cond);
+  font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -360,13 +447,13 @@ kbd {
   font-family: var(--serif);
   font-size: 28px;
   line-height: 1.1;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .panel-kicker {
   margin: 0;
   color: var(--muted);
-  font-family: var(--cond);
+  font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -392,10 +479,48 @@ kbd {
   border: 0;
 }
 
+.pref-block {
+  display: grid;
+  gap: 26px;
+  margin-bottom: 34px;
+  padding-bottom: 26px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.pref-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pref-select {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 15px var(--mono);
+}
+
+.pref-select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.pref-hint {
+  margin: 4px 0 0;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
 .topic-list legend {
   margin-bottom: 13px;
   color: var(--muted);
-  font-family: var(--cond);
+  font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -407,7 +532,7 @@ kbd {
   align-items: center;
   color: var(--ink);
   cursor: pointer;
-  font-family: var(--cond);
+  font-family: var(--mono);
   font-size: 15px;
 }
 
@@ -417,6 +542,8 @@ kbd {
   margin: 0;
   accent-color: var(--accent);
 }
+
+.topic-list input[type="radio"] { accent-color: var(--accent); }
 
 .all-option span {
   margin-left: auto;
@@ -429,7 +556,7 @@ kbd {
 .topic-subhead {
   margin: 8px 0 0;
   color: var(--muted);
-  font-family: var(--cond);
+  font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.12em;
 }
@@ -450,7 +577,7 @@ kbd {
   background: none;
   color: var(--accent);
   cursor: pointer;
-  font-family: var(--cond);
+  font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.12em;
   text-align: left;
@@ -458,14 +585,14 @@ kbd {
 }
 
 .more-toggle span { font-size: 17px; line-height: 1; }
-.more-toggle:hover { text-decoration: underline; text-underline-offset: 4px; }
+.more-toggle:hover { background: var(--paper-deep); text-decoration: underline; text-underline-offset: 4px; }
 .more-categories-body { margin-top: 20px; }
 
 .category-search-label {
   display: block;
   margin-bottom: 8px;
   color: var(--muted);
-  font-family: var(--cond);
+  font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -479,29 +606,35 @@ kbd {
   outline: 0;
   background: transparent;
   color: var(--ink);
-  font: 15px var(--cond);
+  font: 15px var(--mono);
 }
 
 .category-search:focus { border-color: var(--accent); }
 .category-search::placeholder { color: var(--muted); }
-.search-status { min-height: 15px; margin: 8px 0 0; color: var(--muted); font: 11px var(--cond); }
+.search-status { min-height: 15px; margin: 8px 0 0; color: var(--muted); font: 11px var(--mono); }
 .category-results { display: grid; gap: 6px; margin-top: 8px; }
 
 .category-result,
 .selected-category {
-  padding: 6px 0;
+  padding: 6px 8px;
+  margin: 0 -8px; /* papel-hondo band extends past the text edge */
   border: 0;
   background: none;
   color: var(--accent);
   cursor: pointer;
-  font: 13px var(--cond);
+  font: 13px var(--mono);
   text-align: left;
 }
 
 .category-result::before { content: "+ "; }
+/* Hover is papel hondo — never color. */
 .category-result:hover,
-.selected-category:hover { text-decoration: underline; text-underline-offset: 3px; }
-.selected-label { margin: 23px 0 5px; color: var(--muted); font: 10px var(--cond); letter-spacing: 0.12em; }
+.selected-category:hover {
+  background: var(--paper-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.selected-label { margin: 23px 0 5px; color: var(--muted); font: 10px var(--mono); letter-spacing: 0.12em; }
 .selected-categories { display: grid; gap: 2px; }
 .selected-category { color: var(--ink); }
 .selected-category::after { content: "  ×"; color: var(--muted); }
@@ -524,7 +657,7 @@ kbd {
 .stats dd {
   margin: 6px 0 0;
   color: var(--muted);
-  font-family: var(--cond);
+  font-family: var(--mono);
   font-size: 11px;
   line-height: 1.25;
 }
@@ -537,7 +670,7 @@ kbd {
   background: none;
   color: var(--accent);
   cursor: pointer;
-  font-family: var(--cond);
+  font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;

@@ -1,6 +1,7 @@
 node_modules/
-.expo/
 .DS_Store
-apps/mobile/ios/
-apps/mobile/android/
-apps/mobile/.expo/
+
+# The Xcode project is generated — see apps/ios/project.yml and README.
+apps/ios/WikipediaNewTab.xcodeproj/
+xcuserdata/
+apps/ios/build/

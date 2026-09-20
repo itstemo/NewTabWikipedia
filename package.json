@@ -1,12 +1,7 @@
 {
   "name": "newtab-wikipedia",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "test": "tsx --test packages/wikipedia/src/index.test.ts apps/chrome-extension/topics.test.js",
-    "typecheck": "npm run typecheck --workspace apps/mobile"
-  },
-  "devDependencies": {
-    "tsx": "^4.19.2"
+    "test": "node --test apps/chrome-extension/topics.test.js"
   }
 }

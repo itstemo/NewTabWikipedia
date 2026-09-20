@@ -48,6 +48,7 @@
       exintro: '1',
       explaintext: '1',
       exsentences: '5',
+      exlimit: 'max',
       piprop: 'thumbnail|original',
       pithumbsize: '900',
       inprop: 'url',

@@ -21,9 +21,16 @@ final class AppStore: ObservableObject {
     }
 
     func update(_ mutate: (inout SharedStore.Settings) -> Void) {
+        let previous = settings
         mutate(&settings)
         SharedStore.saveSettings(settings)
         WidgetCenter.shared.reloadAllTimelines()
+        // Content settings change what fetchArticles returns — refresh the
+        // on-screen article too. Theme/refresh cadence apply in place.
+        let contentChanged = previous.language != settings.language
+            || Set(previous.topics) != Set(settings.topics)
+            || previous.entryLength != settings.entryLength
+        if contentChanged { Task { await discover(quiet: true) } }
     }
 
     func bootstrap() async {

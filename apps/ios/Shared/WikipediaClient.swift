@@ -47,7 +47,7 @@ enum WikipediaClient {
             "action": "query", "format": "json", "formatversion": "2", "origin": "*",
             "generator": "random", "grnnamespace": "0", "grnlimit": "\(limit)",
             "prop": "extracts|pageimages|description|info",
-            "exintro": "1", "explaintext": "1", "exsentences": "5",
+            "exintro": "1", "explaintext": "1", "exsentences": "5", "exlimit": "max",
             "piprop": "thumbnail|original", "pithumbsize": "900", "inprop": "url",
         ])
     }
@@ -65,7 +65,7 @@ enum WikipediaClient {
             "action": "query", "format": "json", "formatversion": "2", "origin": "*",
             "pageids": pageIds.map(String.init).joined(separator: "|"),
             "prop": "extracts|pageimages|description|info",
-            "exintro": "1", "explaintext": "1", "exsentences": "5",
+            "exintro": "1", "explaintext": "1", "exsentences": "5", "exlimit": "max",
             "piprop": "thumbnail|original", "pithumbsize": "900", "inprop": "url",
         ])
     }
@@ -106,11 +106,12 @@ enum WikipediaClient {
             .trimmingCharacters(in: .whitespaces)
         guard clean.count > maxLength else { return clean }
         let cut = String(clean.prefix(maxLength))
-        for mark in [". ", "? ", "! "] {
-            if let stop = cut.range(of: mark, options: .backwards),
-               cut.distance(from: cut.startIndex, to: stop.lowerBound) > Int(Double(maxLength) * 0.5) {
-                return String(cut[...stop.lowerBound])
-            }
+        let stops = [". ", "? ", "! "].compactMap {
+            cut.range(of: $0, options: .backwards)?.lowerBound
+        }
+        if let stop = stops.max(),
+           cut.distance(from: cut.startIndex, to: stop) > Int(Double(maxLength) * 0.5) {
+            return String(cut[...stop])
         }
         return cut.trimmingCharacters(in: .whitespaces) + "…"
     }
@@ -127,8 +128,17 @@ enum WikipediaClient {
             description: page.description?.trimmingCharacters(in: .whitespaces) ?? "",
             extract: trim(page.extract ?? "", to: entryLengths[entryLength] ?? 640),
             url: url,
-            imageURL: (page.thumbnail?.source ?? page.original?.source).flatMap(URL.init(string:))
+            imageURL: imageSource(page).flatMap(URL.init(string:))
         )
+    }
+
+    /// Originals can be multi-megapixel scans — only fall back to one when
+    /// it's a sane size; the thumbnail (a capped derivative) is preferred.
+    private static func imageSource(_ page: WikiQueryResponse.Page) -> String? {
+        if let source = page.thumbnail?.source { return source }
+        guard let original = page.original, (original.width ?? .max) <= 1600
+        else { return nil }
+        return original.source
     }
 
     /// One batch of usable articles honoring the user's settings. Curated

@@ -50,19 +50,35 @@ struct Provider: TimelineProvider {
                 articles = [latest]
             }
 
-            var entries: [ArticleEntry] = []
-            for (index, article) in articles.prefix(4).enumerated() {
-                SharedStore.cacheArticle(article) // so a tap resolves later
-                let image = await fetchImage(article)
-                entries.append(ArticleEntry(
-                    date: now.addingTimeInterval(interval * Double(index)),
-                    article: article,
-                    image: image
-                ))
+            // Never hand back an empty timeline — the widget must always draw.
+            // On total failure schedule a retry instead of .atEnd, which would
+            // churn the reload budget while the network is down.
+            guard !articles.isEmpty else {
+                completion(Timeline(entries: [.sample], policy: .after(now.addingTimeInterval(interval))))
+                return
             }
 
-            // Never hand back an empty timeline — the widget must always draw.
-            if entries.isEmpty { entries.append(.sample) }
+            let batch = Array(articles.prefix(4))
+            for article in batch { SharedStore.cacheArticle(article) } // so a tap resolves later
+
+            // Image fetches run concurrently — serial 10s timeouts on top of
+            // the API call can exceed the timeline callback budget.
+            let images = await withTaskGroup(of: (Int, UIImage?).self) { group in
+                for (index, article) in batch.enumerated() {
+                    group.addTask { (index, await self.fetchImage(article)) }
+                }
+                var result: [Int: UIImage] = [:]
+                for await (index, image) in group { result[index] = image }
+                return result
+            }
+
+            let entries = batch.enumerated().map { index, article in
+                ArticleEntry(
+                    date: now.addingTimeInterval(interval * Double(index)),
+                    article: article,
+                    image: images[index]
+                )
+            }
 
             // .atEnd: WidgetKit calls back once the last entry is shown.
             completion(Timeline(entries: entries, policy: .atEnd))
@@ -92,7 +108,15 @@ struct WikipediaWidgetView: View {
     @Environment(\.widgetFamily) private var family
     @Environment(\.colorScheme) private var scheme
 
-    private var palette: Palette { Palette.forScheme(scheme) }
+    private var palette: Palette {
+        // The app's theme setting applies to the widget too; "system" defers
+        // to the environment scheme.
+        switch SharedStore.loadSettings().theme {
+        case "dark": return .forScheme(.dark)
+        case "light": return .forScheme(.light)
+        default: return .forScheme(scheme)
+        }
+    }
     private var isSmall: Bool { family == .systemSmall }
 
     var body: some View {

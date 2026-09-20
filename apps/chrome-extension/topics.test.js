@@ -33,5 +33,6 @@ test('builds a page lookup API request with image data', () => {
 
   assert.equal(url.searchParams.get('pageids'), '1|2|3');
   assert.equal(url.searchParams.get('prop'), 'extracts|pageimages|description|info');
+  assert.equal(url.searchParams.get('exlimit'), 'max');
   assert.equal(url.searchParams.get('piprop'), 'thumbnail|original');
 });

@@ -7,7 +7,13 @@ enum SharedStore {
     static let appGroup = "group.com.temo.wikipedia.newtab"
 
     private static var defaults: UserDefaults {
-        UserDefaults(suiteName: appGroup) ?? .standard
+        guard let suite = UserDefaults(suiteName: appGroup) else {
+            // Falling back to .standard keeps the app alive but silently
+            // kills sharing — the widget sees nothing. Fail loudly in debug.
+            assertionFailure("App Group \(appGroup) unavailable — check entitlements")
+            return .standard
+        }
+        return suite
     }
 
     // MARK: Settings
@@ -37,14 +43,27 @@ enum SharedStore {
 
     /// Articles keyed by pageId so a widget tap can resolve its entry even
     /// hours later. Capped — the cache is a lookup table, not a history.
+    /// `articleCacheOrder` tracks recency; dictionary order is arbitrary and
+    /// could evict the article a live widget is showing.
     static func cacheArticle(_ article: Article) {
         var cache = articleCache()
-        cache[String(article.pageId)] = article
-        if cache.count > 60 {
-            for key in cache.keys.prefix(cache.count - 60) { cache.removeValue(forKey: key) }
+        var order = defaults.stringArray(forKey: "articleCacheOrder") ?? []
+        let key = String(article.pageId)
+        cache[key] = article
+        order.removeAll { $0 == key }
+        order.append(key)
+        while cache.count > 60, let oldest = order.first {
+            cache.removeValue(forKey: oldest)
+            order.removeFirst()
+        }
+        while cache.count > 60 {
+            // Entries written before the order list existed
+            guard let orphan = cache.keys.first(where: { !order.contains($0) }) else { break }
+            cache.removeValue(forKey: orphan)
         }
         if let data = try? JSONEncoder().encode(cache) {
             defaults.set(data, forKey: "articleCache")
+            defaults.set(order, forKey: "articleCacheOrder")
         }
     }
 

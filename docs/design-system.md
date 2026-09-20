@@ -41,9 +41,9 @@ them in the bundle.
 - Chrome extension: drop subsetted `.woff2` files in
   `apps/chrome-extension/fonts/` and register with `@font-face`
   (`font-display: block`).
-- iOS: add the TTF/OTF files to the app and widget targets and register via
-  `UIAppFonts` (Expo: `expo-font` / `expo/plugins` fonts config); widgets
-  inherit fonts from the shared bundle.
+- iOS: the TTFs live in `apps/ios/Resources/Fonts/` and are registered via
+  `UIAppFonts` in `project.yml` (generated Info.plist); the widget target
+  inherits them from the shared bundle.
 
 ## Shape
 

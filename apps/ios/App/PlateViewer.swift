@@ -82,7 +82,11 @@ private struct ZoomableImage: UIViewRepresentable {
     }
 
     func updateUIView(_ scrollView: UIScrollView, context: Context) {
-        context.coordinator.imageView?.frame = scrollView.bounds
+        // While zoomed, bounds is the shrunken content-space rect — assigning
+        // it would collapse the image mid-zoom. Only track size at 1x.
+        if scrollView.zoomScale == 1 {
+            context.coordinator.imageView?.frame = scrollView.bounds
+        }
     }
 
     final class Coordinator: NSObject, UIScrollViewDelegate {

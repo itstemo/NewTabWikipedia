@@ -502,7 +502,10 @@ async function searchCategories(query) {
 
   status.textContent = "Searching Wikipedia…";
   try {
-    const data = await fetchJSON(window.WikipediaTopics.categorySearchURL(trimmed, 10, draftSettings?.language));
+    // Always search English: custom categories are English titles and only
+    // apply when language is "en" — a localized namespace (e.g. "Kategorie:")
+    // would be filtered out below and the search would always come up empty.
+    const data = await fetchJSON(window.WikipediaTopics.categorySearchURL(trimmed, 10, "en"));
     const results = (data?.query?.search || [])
       .filter((item) => item.title?.startsWith("Category:"))
       .map((item) => ({ title: item.title, label: item.title.replace(/^Category:/, "") }));
@@ -620,11 +623,14 @@ function wireSettings() {
 
     // Only content settings invalidate the queue; a theme or length change
     // applies in place. A queue from another language never leaks through.
-    const contentChanged = ["topics", "customCategories", "language"]
-      .some((key) => JSON.stringify(previous[key]) !== JSON.stringify(next[key]));
+    const sorted = (items) => JSON.stringify(items.map((item) => item.title ?? item).sort());
+    const contentChanged = previous.language !== next.language
+      || sorted(previous.topics) !== sorted(next.topics)
+      || sorted(previous.customCategories) !== sorted(next.customCategories);
     if (!contentChanged) return;
 
     writeQueue([]);
+    if (previous.language !== next.language) localStorage.removeItem(LAST_KEY);
     el("entry").hidden = true;
     (async () => {
       await coldStart();

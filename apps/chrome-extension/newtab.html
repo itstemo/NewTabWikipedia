@@ -50,6 +50,38 @@
         <button class="panel-close" id="settings-close" type="button" aria-label="Close settings">&times;</button>
       </div>
 
+      <div class="pref-block">
+        <fieldset class="topic-list">
+          <legend>Appearance</legend>
+          <label><input type="radio" name="theme" value="system"> Match device</label>
+          <label><input type="radio" name="theme" value="light"> Light</label>
+          <label><input type="radio" name="theme" value="dark"> Dark</label>
+        </fieldset>
+
+        <div class="pref-row">
+          <label class="pref-label" for="language-select">Language</label>
+          <select id="language-select" class="pref-select" name="language">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="de">Deutsch</option>
+            <option value="fr">Français</option>
+            <option value="it">Italiano</option>
+            <option value="pt">Português</option>
+            <option value="nl">Nederlands</option>
+            <option value="pl">Polski</option>
+            <option value="sv">Svenska</option>
+            <option value="ja">日本語</option>
+          </select>
+        </div>
+
+        <fieldset class="topic-list">
+          <legend>Entry length</legend>
+          <label><input type="radio" name="length" value="brief"> Brief</label>
+          <label><input type="radio" name="length" value="standard"> Standard</label>
+          <label><input type="radio" name="length" value="long"> Long</label>
+        </fieldset>
+      </div>
+
       <fieldset class="topic-list">
         <legend>Choose sections</legend>
         <label class="all-option"><input type="checkbox" name="topic" value="all"> All sections <span>random</span></label>
@@ -62,6 +94,7 @@
         <label><input type="checkbox" name="topic" value="art"> Art</label>
         <label><input type="checkbox" name="topic" value="music"> Music</label>
         <label><input type="checkbox" name="topic" value="literature"> Literature</label>
+        <p class="pref-hint" id="sections-lang-hint" hidden>Sections are drawn from English Wikipedia categories.</p>
       </fieldset>
 
       <section class="more-categories">

@@ -1,21 +1,20 @@
 # Fonts
 
-Two faces, bundled locally — a new tab must never wait on a font CDN.
+Two faces, bundled locally — a new tab must never wait on a font CDN. From
+the Barbechero manual (see `docs/design-system.md` at the repo root):
 
-Until the files are present, `newtab.css` falls through to system faces
-(Iowan Old Style / Charter / Georgia, and Avenir Next Condensed). The layout
-and metrics are unchanged; only the texture is.
-
-Drop these in beside this file:
-
-| File | Face | Used for |
+| Face | Weights | Used for |
 | --- | --- | --- |
-| `Newsreader.woff2` | Newsreader, variable (opsz 6–72, wght 400–600) | headword, body |
-| `IBMPlexSansCondensed-Regular.woff2` | IBM Plex Sans Condensed 400 | gloss, caption, index |
+| Spectral | 300 light · 400 regular + italic · 600 semibold | headword, body, gloss (italic) |
+| IBM Plex Mono | 400 · 500 | kickers, labels, buttons, index, stats |
 
-Both are SIL Open Font License:
+Each face ships as latin + latin-ext `.woff2` subsets
+(`<Family>-<weight>[i]-<subset>.woff2`) with `unicode-range` in
+`newtab.css` — the browser fetches only the subset a page needs.
 
-- Newsreader — https://github.com/productiontype/Newsreader
-- IBM Plex Sans Condensed — https://github.com/IBM/plex
+Both are SIL Open Font License, from the google/fonts repo:
 
-Subset to latin + latin-ext to keep the extension small.
+- Spectral — https://github.com/google/fonts/tree/main/ofl/spectral
+- IBM Plex Mono — https://github.com/google/fonts/tree/main/ofl/ibmplexmono
+
+The iOS app uses the same faces as TTF (see `apps/ios`).

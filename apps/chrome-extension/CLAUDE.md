@@ -80,6 +80,12 @@ The reference is a printed encyclopedia volume, not a newspaper. Hairline
 rules, no shadows, no border radius, no entrance animation on text —
 animating it would literally make the page slower to read.
 
+Colors and type come from the Barbechero manual — tokens live in
+`docs/design-system.md` at the repo root. Warm paper, one warm ink carried
+by alpha, a single terracotta accent, Spectral for text, IBM Plex Mono for
+labels, and hover is papel hondo — never color. The dark scheme is a derived
+relationship; the manual is print-only.
+
 - **The plate is a plate**, 152px and 4:5, not a hero image. Full resolution
   lives behind a click, in a `<dialog>` (which gives Escape and focus
   containment for free), loaded on click and never before.

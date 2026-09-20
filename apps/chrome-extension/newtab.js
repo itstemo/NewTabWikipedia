@@ -17,17 +17,19 @@ const LAST_KEY = "wnt.last";
 const SETTINGS_KEY = "wnt.settings";
 const STATS_KEY = "wnt.stats";
 
-const DEFAULT_SETTINGS = { topics: [], customCategories: [] };
+const DEFAULT_SETTINGS = { topics: [], customCategories: [], theme: "system", language: "en", entryLength: "standard" };
 const DEFAULT_STATS = { articles: 0, links: 0 };
 const TOPICS = window.WikipediaTopics.TOPICS;
+
+const THEMES = ["system", "light", "dark"];
+const ENTRY_LENGTHS = { brief: 340, standard: 640, long: 1100 };
+const LANGUAGES = ["en", "es", "de", "fr", "it", "pt", "nl", "pl", "sv", "ja"];
 
 const QUEUE_TARGET = 8;   // a few days of casual use, offline
 const QUEUE_MIN = 4;      // top up when we drop below this
 const FETCH_COUNT = 12;   // over-fetch: filters reject a good share
 const MIN_EXTRACT = 300;  // shorter than this is a stub, not an entry
 const MAX_EXTRACT = 640;  // trimmed at a sentence boundary
-
-const API = "https://en.wikipedia.org/w/api.php";
 
 /* Random Wikipedia skews hard toward sports seasons, squad lists, election
  * tables and one-line athlete stubs — the length filter alone doesn't catch
@@ -83,7 +85,10 @@ function normalizeSettings(saved) {
       .filter((item, index, items) => items.findIndex((candidate) => candidate.title === item.title) === index)
       .slice(0, 8)
     : [];
-  return { topics, customCategories };
+  const theme = THEMES.includes(saved?.theme) ? saved.theme : DEFAULT_SETTINGS.theme;
+  const language = LANGUAGES.includes(saved?.language) ? saved.language : DEFAULT_SETTINGS.language;
+  const entryLength = ENTRY_LENGTHS[saved?.entryLength] ? saved.entryLength : DEFAULT_SETTINGS.entryLength;
+  return { topics, customCategories, theme, language, entryLength };
 }
 
 function readSettings() {
@@ -155,6 +160,10 @@ function renderCustomCategories() {
   });
 }
 
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+}
+
 function renderSettings() {
   draftSettings = readSettings();
   document.querySelectorAll('input[name="topic"]').forEach((input) => {
@@ -162,6 +171,15 @@ function renderSettings() {
       ? !hasSelection(draftSettings)
       : draftSettings.topics.includes(input.value);
   });
+  document.querySelectorAll('input[name="theme"]').forEach((input) => {
+    input.checked = input.value === draftSettings.theme;
+  });
+  document.querySelectorAll('input[name="length"]').forEach((input) => {
+    input.checked = input.value === draftSettings.entryLength;
+  });
+  el("language-select").value = draftSettings.language;
+  // Curated sections are English Wikipedia categories; hide the hint for en.
+  el("sections-lang-hint").hidden = draftSettings.language === "en";
   renderCustomCategories();
   updateStatsUI();
 }
@@ -181,6 +199,7 @@ function setSettingsOpen(open) {
   panel.hidden = !open;
   toggle.setAttribute("aria-expanded", String(open));
   if (open) renderSettings();
+  else applyTheme(readSettings().theme); // closing without Apply restores
 }
 
 /* ------------------------------------------------------------ images -- */
@@ -244,11 +263,12 @@ function fullSrc(entry) {
 /* ------------------------------------------------------------ render -- */
 
 function trimExtract(text) {
+  const limit = ENTRY_LENGTHS[readSettings().entryLength] || MAX_EXTRACT;
   const clean = text.replace(/\s+/g, " ").trim();
-  if (clean.length <= MAX_EXTRACT) return clean;
-  const cut = clean.slice(0, MAX_EXTRACT);
+  if (clean.length <= limit) return clean;
+  const cut = clean.slice(0, limit);
   const stop = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("? "), cut.lastIndexOf("! "));
-  return stop > MAX_EXTRACT * 0.5 ? cut.slice(0, stop + 1) : cut.trimEnd() + "…";
+  return stop > limit * 0.5 ? cut.slice(0, stop + 1) : cut.trimEnd() + "…";
 }
 
 function render(entry, { stale = false } = {}) {
@@ -304,7 +324,7 @@ function render(entry, { stale = false } = {}) {
 
 /* One request for a dozen entries. The per-article random/summary endpoint
  * would cost one round trip each to refill the queue. */
-function apiUrl() {
+function apiUrl(language) {
   const params = new URLSearchParams({
     action: "query",
     format: "json",
@@ -323,7 +343,7 @@ function apiUrl() {
     pithumbsize: "330", // a standard step; see STEPS above
     inprop: "url",
   });
-  return `${API}?${params}`;
+  return `${window.WikipediaTopics.apiBase(language)}?${params}`;
 }
 
 function keep(page) {
@@ -365,9 +385,9 @@ async function fetchJSON(url) {
   return res.json();
 }
 
-async function fetchCategoryEntries(categories) {
+async function fetchCategoryEntries(categories, language) {
   const memberResponses = await Promise.all(
-    categories.map((category) => fetchJSON(window.WikipediaTopics.categoryMembersURL(category))),
+    categories.map((category) => fetchJSON(window.WikipediaTopics.categoryMembersURL(category, 500, language))),
   );
   const candidates = memberResponses.flatMap((response) => response?.query?.categorymembers || []);
   const pageIds = shuffle(candidates)
@@ -376,19 +396,21 @@ async function fetchCategoryEntries(categories) {
     .filter(Boolean);
   if (!pageIds.length) return [];
 
-  const data = await fetchJSON(window.WikipediaTopics.pageLookupURL([...new Set(pageIds)]));
+  const data = await fetchJSON(window.WikipediaTopics.pageLookupURL([...new Set(pageIds)], language));
   return (data?.query?.pages || []).filter(keep).map(toEntry);
 }
 
 async function fetchEntries() {
   const settings = readSettings();
-  const categories = [
+  // Curated and custom sections are English Wikipedia categories — other
+  // languages fall back to pure random until the sections map across.
+  const categories = settings.language === "en" ? [
     ...settings.topics.map((id) => TOPICS[id]?.category).filter(Boolean),
     ...settings.customCategories.map((category) => category.title),
-  ];
-  if (categories.length) return fetchCategoryEntries(categories);
+  ] : [];
+  if (categories.length) return fetchCategoryEntries(categories, settings.language);
 
-  const data = await fetchJSON(apiUrl());
+  const data = await fetchJSON(apiUrl(settings.language));
   return (data?.query?.pages || []).filter(keep).map(toEntry);
 }
 
@@ -480,7 +502,7 @@ async function searchCategories(query) {
 
   status.textContent = "Searching Wikipedia…";
   try {
-    const data = await fetchJSON(window.WikipediaTopics.categorySearchURL(trimmed));
+    const data = await fetchJSON(window.WikipediaTopics.categorySearchURL(trimmed, 10, draftSettings?.language));
     const results = (data?.query?.search || [])
       .filter((item) => item.title?.startsWith("Category:"))
       .map((item) => ({ title: item.title, label: item.title.replace(/^Category:/, "") }));
@@ -510,6 +532,20 @@ function removeCustomCategory(title) {
   if (!draftSettings) return;
   draftSettings.customCategories = draftSettings.customCategories.filter((item) => item.title !== title);
   refreshTopicInputs();
+}
+
+function syncPrefDraft(event) {
+  if (!draftSettings) return;
+  const input = event.target;
+  if (input.name === "theme") {
+    draftSettings.theme = input.value;
+    applyTheme(input.value); // preview; reverts if the panel closes unapplied
+  }
+  else if (input.name === "length") draftSettings.entryLength = input.value;
+  else if (input.name === "language") {
+    draftSettings.language = input.value;
+    el("sections-lang-hint").hidden = input.value === "en";
+  }
 }
 
 function syncTopicDraft(event) {
@@ -544,6 +580,11 @@ function wireSettings() {
     input.addEventListener("change", syncTopicDraft);
   });
 
+  document.querySelectorAll('input[name="theme"], input[name="length"]').forEach((input) => {
+    input.addEventListener("change", syncPrefDraft);
+  });
+  el("language-select").addEventListener("change", syncPrefDraft);
+
   moreToggle.addEventListener("click", () => {
     const open = moreBody.hidden;
     moreBody.hidden = !open;
@@ -572,9 +613,17 @@ function wireSettings() {
     const previous = readSettings();
     writeSettings(next);
     setSettingsOpen(false);
-    if (JSON.stringify(previous) === JSON.stringify(next)) return;
+    applyTheme(next.theme);
+    if (next.entryLength !== previous.entryLength && current) {
+      el("extract").textContent = trimExtract(current.extract);
+    }
 
-    // A queue from another section should never leak into the new selection.
+    // Only content settings invalidate the queue; a theme or length change
+    // applies in place. A queue from another language never leaks through.
+    const contentChanged = ["topics", "customCategories", "language"]
+      .some((key) => JSON.stringify(previous[key]) !== JSON.stringify(next[key]));
+    if (!contentChanged) return;
+
     writeQueue([]);
     el("entry").hidden = true;
     (async () => {
@@ -589,6 +638,8 @@ function trackLinkOpen() {
 }
 
 function boot() {
+  // Synchronous, before first paint: theme must be set before CSS resolves.
+  applyTheme(readSettings().theme);
   wireViewer();
   wireSettings();
   el("headword").addEventListener("click", trackLinkOpen);

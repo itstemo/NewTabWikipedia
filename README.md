@@ -3,15 +3,30 @@
 A small monorepo for two ways to discover a random Wikipedia article:
 
 - A Chrome MV3 extension that replaces every new tab with an encyclopedia entry.
-- An Expo mobile app with an iOS Home Screen widget.
+- A native iOS app (SwiftUI) with a Home Screen widget.
+
+Both follow the Barbechero design system — see `docs/design-system.md`.
 
 ## Repository layout
 
 ```text
-apps/chrome-extension/   Chrome new-tab extension
-apps/mobile/              Expo iOS app and widget
-packages/wikipedia/       Shared article types, API request, and filters
+apps/chrome-extension/   Chrome new-tab extension (dependency-free, no build)
+apps/ios/                Native iOS app + WidgetKit extension
+docs/                    Design tokens, screenshots
 ```
+
+Each app owns its Wikipedia client — the extension's lives in `newtab.js`,
+the iOS one in `apps/ios/Shared/WikipediaClient.swift`. They are deliberate
+parallel implementations (the extension must stay dependency-free and paint
+from synchronous `localStorage`); keep the reject filters and API params in
+step when you change either.
+
+## Prerequisites
+
+- Google Chrome for the extension.
+- Xcode 16+ and [XcodeGen](https://github.com/yonsm/XcodeGen)
+  (`brew install xcodegen`) for the iOS app.
+- Node.js for the test suite.
 
 ## Chrome extension
 
@@ -21,56 +36,46 @@ packages/wikipedia/       Shared article types, API request, and filters
 4. Select `apps/chrome-extension`.
 
 The extension is deliberately dependency-free and uses a local queue so a new
-Tab can paint before the network responds. Its settings panel keeps curated
-Wikipedia sections visible, supports searchable custom categories and multiple
-selections, and keeps local counters for articles encountered and full entries
-opened.
+tab can paint before the network responds. Its settings panel covers
+appearance (device/light/dark), Wikipedia language, entry length, curated
+and custom sections, and local progress counters.
 
-## Mobile development
-
-From the repository root:
+For fast iteration without reloading the extension, serve the directory and
+open `newtab.html` directly — the page uses no extension-only APIs:
 
 ```bash
-npm install
-npm run typecheck
-npm test
+cd apps/chrome-extension
+python3 -m http.server
+# open http://localhost:8000/newtab.html
 ```
 
-Run the Expo development server:
+`advance()`, `coldStart()` and `current` are reachable from the console.
+`apps/chrome-extension/CLAUDE.md` documents the rules the page lives by —
+read it before editing.
+
+## iOS app
+
+The Xcode project is generated from `apps/ios/project.yml` (gitignored):
 
 ```bash
-cd apps/mobile
-npm start
+cd apps/ios
+xcodegen generate
+open WikipediaNewTab.xcodeproj
 ```
 
-The widget is a native iOS extension and is not available in Expo Go. Use an
-Expo development build or a prebuild-generated Xcode project:
+Run the `WikipediaNewTab` scheme on a simulator or device. See
+`apps/ios/README.md` for how the widget refreshes (it fetches its own
+timelines — no app opens required), the App Group layout, and signing notes.
+
+## Tests
 
 ```bash
-cd apps/mobile
-npx expo prebuild
-npx expo run:ios
+npm test   # node:test suite covering the extension's API helpers
 ```
-
-## TestFlight
-
-After an Apple Developer account and App Store Connect app record exist:
-
-```bash
-cd apps/mobile
-npx eas-cli login
-eas build --platform ios --profile production
-eas submit --platform ios
-```
-
-The `production` profile uploads a signed iOS build to App Store Connect, where
-it can be added to an internal TestFlight group. External testers require
-Apple's TestFlight beta review.
 
 ## Notes
 
 - Wikipedia requests are made directly from the clients; no server or API key
   is required.
-- The app saves the latest article locally, prefers image-backed entries, and
-  schedules a small batch of articles for the widget timeline.
-- iOS controls the exact timing of background widget refreshes.
+- iOS controls the exact timing of widget refreshes; the app sets the gap
+  between articles.

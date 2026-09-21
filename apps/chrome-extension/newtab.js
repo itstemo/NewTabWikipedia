@@ -420,27 +420,35 @@ function preload(entry) {
   if (entry.thumbnail) new Image().src = plateSrc(entry);
 }
 
-async function topUp() {
-  let queue = readQueue();
-  if (queue.length >= QUEUE_MIN) return;
+let toppingUp = false;
 
-  // Two passes at most: filters are aggressive, one batch may not be enough.
-  for (let attempt = 0; attempt < 2 && queue.length < QUEUE_TARGET; attempt++) {
-    let fresh;
-    try {
-      fresh = await fetchEntries();
-    } catch {
-      return; // Silent. A new tab never shows a network error.
+async function topUp() {
+  if (toppingUp) return; // overlapping calls would double-fetch a batch
+  toppingUp = true;
+  try {
+    let queue = readQueue();
+    if (queue.length >= QUEUE_MIN) return;
+
+    // Two passes at most: filters are aggressive, one batch may not be enough.
+    for (let attempt = 0; attempt < 2 && queue.length < QUEUE_TARGET; attempt++) {
+      let fresh;
+      try {
+        fresh = await fetchEntries();
+      } catch {
+        return; // Silent. A new tab never shows a network error.
+      }
+      const seen = new Set(queue.map((e) => e.pageid));
+      for (const entry of fresh) {
+        if (queue.length >= QUEUE_TARGET) break;
+        if (seen.has(entry.pageid)) continue;
+        seen.add(entry.pageid);
+        preload(entry);
+        queue.push(entry);
+      }
+      writeQueue(queue);
     }
-    const seen = new Set(queue.map((e) => e.pageid));
-    for (const entry of fresh) {
-      if (queue.length >= QUEUE_TARGET) break;
-      if (seen.has(entry.pageid)) continue;
-      seen.add(entry.pageid);
-      preload(entry);
-      queue.push(entry);
-    }
-    writeQueue(queue);
+  } finally {
+    toppingUp = false;
   }
 }
 
@@ -639,6 +647,30 @@ function wireSettings() {
   });
 }
 
+/* Shows the next queued entry. A double-click or key repeat within 350ms
+ * would flash two entries past — eat it. While a cold-start fetch is in
+ * flight, presses are ignored entirely rather than racing it. */
+let refreshing = false;
+let lastAdvanceAt = 0;
+
+async function showNext() {
+  if (refreshing) return;
+  const now = Date.now();
+  if (now - lastAdvanceAt < 350) return;
+  lastAdvanceAt = now;
+  if (advance()) {
+    topUp();
+    return;
+  }
+  refreshing = true;
+  try {
+    await coldStart();
+  } finally {
+    refreshing = false;
+  }
+  topUp();
+}
+
 function trackLinkOpen() {
   incrementStat("links");
 }
@@ -659,10 +691,7 @@ function boot() {
     coldStart();
   }
 
-  el("another").addEventListener("click", () => {
-    if (!advance()) coldStart();
-    topUp();
-  });
+  el("another").addEventListener("click", showNext);
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !el("settings-panel").hidden) {
@@ -670,12 +699,11 @@ function boot() {
       return;
     }
     if (e.key !== "r" && e.key !== "R") return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
     if (el("viewer").open) return; // Escape closes the viewer; R does nothing
     if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName) || e.target.isContentEditable) return;
     e.preventDefault();
-    if (!advance()) coldStart();
-    topUp();
+    showNext();
   });
 }
 

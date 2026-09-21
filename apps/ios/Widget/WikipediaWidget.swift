@@ -51,10 +51,11 @@ struct Provider: TimelineProvider {
             }
 
             // Never hand back an empty timeline — the widget must always draw.
-            // On total failure schedule a retry instead of .atEnd, which would
-            // churn the reload budget while the network is down.
+            // On total failure retry soon: .atEnd would churn the reload
+            // budget, but the full refresh interval could leave the
+            // placeholder up for hours after one bad fetch.
             guard !articles.isEmpty else {
-                completion(Timeline(entries: [.sample], policy: .after(now.addingTimeInterval(interval))))
+                completion(Timeline(entries: [.sample], policy: .after(now.addingTimeInterval(900))))
                 return
             }
 

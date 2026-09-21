@@ -5,6 +5,9 @@ import WidgetKit
 final class AppStore: ObservableObject {
     @Published var article: Article?
     @Published var isLoading = true
+    /// Guards re-entrant fetches — a second ↻ tap or pull-to-refresh while a
+    /// fetch is in flight is ignored rather than racing it.
+    @Published var isFetching = false
     @Published var settings: SharedStore.Settings
     @Published var stats: SharedStore.Stats
     /// Set when a widget tap routes an article URL into the app.
@@ -44,6 +47,9 @@ final class AppStore: ObservableObject {
     }
 
     func discover(quiet: Bool) async {
+        guard !isFetching else { return }
+        isFetching = true
+        defer { isFetching = false }
         if !quiet && article == nil { isLoading = true }
         defer { isLoading = false }
         guard let articles = try? await WikipediaClient.fetchArticles(settings: settings),

@@ -66,8 +66,10 @@ struct ContentView: View {
                 Text("↻")
                     .font(.serif(26))
                     .foregroundStyle(palette.accent)
+                    .opacity(store.isFetching ? 0.35 : 1)
                     .padding(6)
             }
+            .disabled(store.isFetching)
             .accessibilityLabel("Find another article")
         }
         .padding(.top, 12)
@@ -93,16 +95,13 @@ struct ContentView: View {
                 .frame(height: 1)
                 .padding(.bottom, 20)
 
+            // No plate when there is no plate — an empty frame or a monogram
+            // reads as a bug, not a quieter variant.
             if article.imageURL != nil {
-                Button { zoomedArticle = article } label: {
-                    plate(article)
+                PlateView(article: article, palette: palette) {
+                    zoomedArticle = article
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("View this plate at full size")
                 .padding(.bottom, 24)
-            } else {
-                plate(article)
-                    .padding(.bottom, 24)
             }
 
             Text(article.extract)
@@ -133,29 +132,6 @@ struct ContentView: View {
         }
     }
 
-    private func plate(_ article: Article) -> some View {
-        AsyncImage(url: article.imageURL) { phase in
-            switch phase {
-            case .success(let image):
-                image.resizable().aspectRatio(contentMode: .fill)
-            default:
-                fallbackPlate(article)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 220)
-        .clipped()
-        .overlay(Rectangle().stroke(palette.rule, lineWidth: 1))
-    }
-
-    private func fallbackPlate(_ article: Article) -> some View {
-        palette.paperDeep.overlay(
-            Text(article.title.prefix(1).uppercased())
-                .font(.serif(72))
-                .foregroundStyle(palette.muted)
-        )
-    }
-
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("No article yet")
@@ -175,6 +151,53 @@ struct ContentView: View {
             .padding(.top, 12)
         }
         .padding(.top, 40)
+    }
+}
+
+/// The plate. Loads its own image so a failed fetch collapses the frame
+/// instead of leaving an empty bordered box; `task(id:)` resets state when
+/// the article changes under a stable view identity.
+private struct PlateView: View {
+    let article: Article
+    let palette: Palette
+    let open: () -> Void
+    @State private var image: UIImage?
+    @State private var failed = false
+
+    var body: some View {
+        if let url = article.imageURL, !failed {
+            Button(action: open) {
+                Group {
+                    if let image {
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else {
+                        palette.paperDeep
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 220)
+                .clipped()
+                .overlay(Rectangle().stroke(palette.rule, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("View this plate at full size")
+            .task(id: url) {
+                image = nil
+                failed = false
+                await load(url)
+            }
+        }
+    }
+
+    private func load(_ url: URL) async {
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 20
+        guard let (data, _) = try? await URLSession.shared.data(for: request),
+              let loaded = UIImage(data: data)
+        else { failed = true; return }
+        image = loaded
     }
 }
 
